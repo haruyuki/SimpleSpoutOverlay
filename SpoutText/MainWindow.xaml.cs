@@ -96,7 +96,19 @@ public partial class MainWindow : Window
             return;
         }
 
-        DragDrop.DoDragDrop(listBox, draggedLayer, DragDropEffects.Move);
+        DataObject dragData = new();
+        dragData.SetData(typeof(LayerBase), draggedLayer);
+        switch (draggedLayer)
+        {
+            case TextLayer textLayer:
+                dragData.SetData(typeof(TextLayer), textLayer);
+                break;
+            case ImageLayer imageLayer:
+                dragData.SetData(typeof(ImageLayer), imageLayer);
+                break;
+        }
+
+        DragDrop.DoDragDrop(listBox, dragData, DragDropEffects.Move);
     }
 
     private void OnLayerListPreviewKeyDown(object sender, KeyEventArgs e)
@@ -165,7 +177,7 @@ public partial class MainWindow : Window
 
     private void OnLayerListDragOver(object sender, DragEventArgs e)
     {
-        if (!e.Data.GetDataPresent(typeof(LayerBase)) || sender is not ListBox listBox)
+        if (sender is not ListBox listBox || !TryGetDraggedLayer(e.Data, out _))
         {
             ClearInsertionAdorner();
             e.Effects = DragDropEffects.None;
@@ -206,7 +218,7 @@ public partial class MainWindow : Window
 
     private void OnLayerListDrop(object sender, DragEventArgs e)
     {
-        if (sender is not ListBox || DataContext is not MainWindowViewModel viewModel || e.Data.GetData(typeof(LayerBase)) is not LayerBase draggedLayer)
+        if (sender is not ListBox || DataContext is not MainWindowViewModel viewModel || !TryGetDraggedLayer(e.Data, out LayerBase draggedLayer))
         {
             ClearInsertionAdorner();
             return;
@@ -225,6 +237,30 @@ public partial class MainWindow : Window
         LayerBase? targetLayer = _dropTargetItem?.DataContext as LayerBase;
         viewModel.ReorderLayer(draggedLayer, targetLayer, _insertAfterTarget);
         ClearInsertionAdorner();
+    }
+
+    private static bool TryGetDraggedLayer(IDataObject data, out LayerBase layer)
+    {
+        if (data.GetData(typeof(LayerBase)) is LayerBase baseLayer)
+        {
+            layer = baseLayer;
+            return true;
+        }
+
+        if (data.GetData(typeof(TextLayer)) is TextLayer textLayer)
+        {
+            layer = textLayer;
+            return true;
+        }
+
+        if (data.GetData(typeof(ImageLayer)) is ImageLayer imageLayer)
+        {
+            layer = imageLayer;
+            return true;
+        }
+
+        layer = null!;
+        return false;
     }
 
     private static bool TryResolveDropTarget(ListBox listBox, Point listPosition, out ListBoxItem? targetItem, out bool insertAfter)
