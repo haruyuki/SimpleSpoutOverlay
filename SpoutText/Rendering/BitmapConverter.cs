@@ -9,30 +9,37 @@ namespace SpoutText.Rendering
     public static class BitmapConverter
     {
         /// <summary>
-        /// Converts a RenderTargetBitmap to a RGBA byte array.
-        /// The bitmap should be in PBGRA32 format (with premultiplied alpha).
-        /// Output is RGBA format as expected by Spout.
+        /// Converts a RenderTargetBitmap to RGBA using caller-provided buffers to avoid per-frame allocations.
         /// </summary>
-        public static byte[] BitmapToRgbaArray(RenderTargetBitmap bitmap)
+        public static void BitmapToRgbaArray(RenderTargetBitmap bitmap, byte[] bgraBuffer, byte[] rgbaBuffer)
         {
             int width = bitmap.PixelWidth;
             int height = bitmap.PixelHeight;
             int bytesPerPixel = (bitmap.Format.BitsPerPixel + 7) / 8; // PBGRA32 = 4 bytes
             int stride = width * bytesPerPixel;
+            int pixelByteCount = stride * height;
 
-            byte[] pixelData = new byte[stride * height];
-            bitmap.CopyPixels(pixelData, stride, 0);
+            if (bgraBuffer.Length < pixelByteCount)
+            {
+                throw new ArgumentException("BGRA buffer is too small for the source bitmap.", nameof(bgraBuffer));
+            }
+
+            int rgbaByteCount = width * height * 4;
+            if (rgbaBuffer.Length < rgbaByteCount)
+            {
+                throw new ArgumentException("RGBA buffer is too small for the source bitmap.", nameof(rgbaBuffer));
+            }
+
+            bitmap.CopyPixels(bgraBuffer, stride, 0);
 
             // Convert PBGRA32 (premultiplied BGRA) to RGBA
-            byte[] rgbaData = new byte[width * height * 4];
-
-            for (int i = 0; i < pixelData.Length; i += 4)
+            for (int sourceIndex = 0, outputIndex = 0; sourceIndex < pixelByteCount; sourceIndex += 4, outputIndex += 4)
             {
                 // PBGRA format: Blue, Green, Red, Alpha (premultiplied)
-                byte b = pixelData[i];
-                byte g = pixelData[i + 1];
-                byte r = pixelData[i + 2];
-                byte a = pixelData[i + 3];
+                byte b = bgraBuffer[sourceIndex];
+                byte g = bgraBuffer[sourceIndex + 1];
+                byte r = bgraBuffer[sourceIndex + 2];
+                byte a = bgraBuffer[sourceIndex + 3];
 
                 // Un-premultiply alpha if alpha > 0
                 if (a > 0)
@@ -43,15 +50,13 @@ namespace SpoutText.Rendering
                 }
 
                 // Convert to RGBA
-                int outputIndex = (i / 4) * 4;
-                rgbaData[outputIndex] = r;
-                rgbaData[outputIndex + 1] = g;
-                rgbaData[outputIndex + 2] = b;
-                rgbaData[outputIndex + 3] = a;
+                rgbaBuffer[outputIndex] = r;
+                rgbaBuffer[outputIndex + 1] = g;
+                rgbaBuffer[outputIndex + 2] = b;
+                rgbaBuffer[outputIndex + 3] = a;
             }
-
-            return rgbaData;
         }
+
     }
 }
 

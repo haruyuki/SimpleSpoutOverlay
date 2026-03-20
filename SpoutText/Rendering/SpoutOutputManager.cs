@@ -14,6 +14,8 @@ namespace SpoutText.Rendering
         private SpoutSender? _sender;
         private bool _isInitialized;
         private bool _disposed;
+        private byte[]? _bgraBuffer;
+        private byte[]? _rgbaBuffer;
 
         /// <summary>
         /// Initializes the Spout sender with the specified name.
@@ -89,11 +91,14 @@ namespace SpoutText.Rendering
 
             try
             {
-                byte[] rgbaData = BitmapConverter.BitmapToRgbaArray(bitmap);
+                EnsureBuffers(bitmap);
+                byte[] bgraBuffer = _bgraBuffer!;
+                byte[] rgbaBuffer = _rgbaBuffer!;
+                BitmapConverter.BitmapToRgbaArray(bitmap, bgraBuffer, rgbaBuffer);
 
                 unsafe
                 {
-                    fixed (byte* pData = rgbaData)
+                    fixed (byte* pData = rgbaBuffer)
                     {
                         _sender.SendImage(
                             pData,
@@ -108,6 +113,23 @@ namespace SpoutText.Rendering
             catch (Exception ex)
             {
                 Debug.WriteLine($"Error sending Spout frame: {ex.Message}");
+            }
+        }
+
+        private void EnsureBuffers(RenderTargetBitmap bitmap)
+        {
+            int bytesPerPixel = (bitmap.Format.BitsPerPixel + 7) / 8;
+            int bgraLength = bitmap.PixelWidth * bitmap.PixelHeight * bytesPerPixel;
+            int rgbaLength = bitmap.PixelWidth * bitmap.PixelHeight * 4;
+
+            if (_bgraBuffer == null || _bgraBuffer.Length != bgraLength)
+            {
+                _bgraBuffer = new byte[bgraLength];
+            }
+
+            if (_rgbaBuffer == null || _rgbaBuffer.Length != rgbaLength)
+            {
+                _rgbaBuffer = new byte[rgbaLength];
             }
         }
 
@@ -132,6 +154,8 @@ namespace SpoutText.Rendering
             {
                 _sender = null;
                 _isInitialized = false;
+                _bgraBuffer = null;
+                _rgbaBuffer = null;
             }
         }
 
