@@ -72,13 +72,28 @@
             <TextBlock x:Name="BlueValueText" Grid.Column="2" Text="255" VerticalAlignment="Center" HorizontalAlignment="Right" Foreground="{DynamicResource Brush.TextPrimary}" />
         </Grid>
 
-        <TextBlock Grid.Row="5"
-                   x:Name="HexText"
-                   Text="#FFFFFFFF"
-                   FontFamily="Consolas"
-                   FontSize="13"
-                   VerticalAlignment="Top"
-                   Foreground="{DynamicResource Brush.TextPrimary}" />
+        <Grid Grid.Row="5" Margin="0,0,0,12" VerticalAlignment="Top">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0"
+                       Text="RGB"
+                       VerticalAlignment="Center"
+                       Margin="0,0,10,0"
+                       FontWeight="SemiBold"
+                       Foreground="{DynamicResource Brush.TextMuted}" />
+            <TextBox Grid.Column="1"
+                     x:Name="HexInput"
+                     Text="#FFFFFF"
+                     VerticalAlignment="Top"
+                     FontFamily="Consolas"
+                     FontSize="13"
+                     ToolTip="Paste RGB as #RRGGBB (alpha stays on A slider)"
+                     TextChanged="OnHexInputChanged"
+                     LostFocus="OnHexInputLostFocus"
+                     KeyDown="OnHexInputKeyDown" />
+        </Grid>
 
         <StackPanel Grid.Row="6" Orientation="Horizontal" HorizontalAlignment="Right">
             <Button Content="OK" Width="88" Margin="0,0,8,0" IsDefault="True" Click="OnOkClick" />

@@ -1,11 +1,14 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 
 namespace SpoutText.UI.Dialogs;
 
 public partial class ColorPickerWindow : Window
 {
+    private bool _isUpdatingHexInput;
+
     public Color SelectedColor { get; private set; }
 
     public ColorPickerWindow(Color initialColor)
@@ -40,7 +43,83 @@ public partial class ColorPickerWindow : Window
         GreenValueText.Text = g.ToString();
         BlueValueText.Text = b.ToString();
 
-        HexText.Text = $"#{a:X2}{r:X2}{g:X2}{b:X2}";
+        UpdateHexInputText(r, g, b);
+    }
+
+    private void OnHexInputChanged(object sender, TextChangedEventArgs e)
+    {
+        if (_isUpdatingHexInput)
+            return;
+
+        if (TryParseRgbHex(HexInput.Text, out var r, out var g, out var b))
+        {
+            RedSlider.Value = r;
+            GreenSlider.Value = g;
+            BlueSlider.Value = b;
+            UpdatePreview();
+        }
+    }
+
+    private void OnHexInputLostFocus(object sender, RoutedEventArgs e)
+    {
+        NormalizeHexInputText();
+    }
+
+    private void OnHexInputKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter)
+            return;
+
+        NormalizeHexInputText();
+        e.Handled = true;
+    }
+
+    private void NormalizeHexInputText()
+    {
+        if (TryParseRgbHex(HexInput.Text, out var r, out var g, out var b))
+        {
+            RedSlider.Value = r;
+            GreenSlider.Value = g;
+            BlueSlider.Value = b;
+            UpdatePreview();
+            return;
+        }
+
+        UpdateHexInputText((byte)RedSlider.Value, (byte)GreenSlider.Value, (byte)BlueSlider.Value);
+    }
+
+    private void UpdateHexInputText(byte r, byte g, byte b)
+    {
+        var hex = $"#{r:X2}{g:X2}{b:X2}";
+        if (HexInput.Text == hex)
+            return;
+
+        _isUpdatingHexInput = true;
+        HexInput.Text = hex;
+        _isUpdatingHexInput = false;
+    }
+
+    private static bool TryParseRgbHex(string? input, out byte r, out byte g, out byte b)
+    {
+        r = 0;
+        g = 0;
+        b = 0;
+
+        if (string.IsNullOrWhiteSpace(input))
+            return false;
+
+        var hex = input.Trim();
+        if (hex.StartsWith("#"))
+            hex = hex[1..];
+
+        if (hex.Length != 6)
+            return false;
+
+        if (!byte.TryParse(hex[..2], System.Globalization.NumberStyles.HexNumber, null, out r))
+            return false;
+        if (!byte.TryParse(hex.Substring(2, 2), System.Globalization.NumberStyles.HexNumber, null, out g))
+            return false;
+        return byte.TryParse(hex.Substring(4, 2), System.Globalization.NumberStyles.HexNumber, null, out b);
     }
 
     private void OnOkClick(object sender, RoutedEventArgs e)
