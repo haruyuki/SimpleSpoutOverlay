@@ -25,10 +25,19 @@ namespace SpoutText.Models
 
         public void RemoveLayer(TextLayer layer)
         {
+            int removedIndex = _layers.IndexOf(layer);
             _layers.Remove(layer);
             if (SelectedLayer == layer)
             {
-                SelectedLayer = _layers.Count > 0 ? _layers[^1] : null;
+                if (_layers.Count == 0)
+                {
+                    SelectedLayer = null;
+                }
+                else
+                {
+                    int nextIndex = Math.Min(Math.Max(removedIndex, 0), _layers.Count - 1);
+                    SelectedLayer = _layers[nextIndex];
+                }
             }
             LayersChanged?.Invoke();
         }

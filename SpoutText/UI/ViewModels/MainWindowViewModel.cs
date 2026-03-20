@@ -359,8 +359,17 @@ namespace SpoutText.UI.ViewModels
         private void DeleteLayer()
         {
             if (SelectedLayer == null) return;
+            int removedIndex = _layerManager.Layers.IndexOf(SelectedLayer);
             _layerManager.RemoveLayer(SelectedLayer);
-            SelectedLayer = _layerManager.Layers.Count > 0 ? _layerManager.Layers[^1] : null;
+
+            if (_layerManager.Layers.Count == 0)
+            {
+                SelectedLayer = null;
+                return;
+            }
+
+            int nextIndex = Math.Min(Math.Max(removedIndex, 0), _layerManager.Layers.Count - 1);
+            SelectedLayer = _layerManager.Layers[nextIndex];
         }
 
         private void MoveLayerUp()
