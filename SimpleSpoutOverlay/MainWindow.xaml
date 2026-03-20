@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:converters="clr-namespace:SimpleSpoutOverlay.UI.Converters"
+        xmlns:behaviors="clr-namespace:SimpleSpoutOverlay.UI.Behaviors"
         mc:Ignorable="d"
         Title="Spout Text Overlay"
         Height="840"
@@ -11,11 +12,53 @@
         WindowStartupLocation="CenterScreen"
         Background="{DynamicResource Brush.WindowBackground}"
         MinHeight="700"
-        MinWidth="1200">
+        MinWidth="1200"
+        xmlns:viewModels="clr-namespace:SimpleSpoutOverlay.UI.ViewModels"
+        d:DataContext="{d:DesignInstance Type=viewModels:MainWindowViewModel, IsDesignTimeCreatable=False}">
     <Window.Resources>
         <converters:ColorToBrushConverter x:Key="ColorToBrushConverter" />
         <converters:HasValueToBoolConverter x:Key="HasValueToBoolConverter" />
         <converters:SelectedLayerToVisibilityConverter x:Key="SelectedLayerToVisibilityConverter" />
+
+        <Style x:Key="PropertyRowStyle" TargetType="StackPanel">
+            <Setter Property="Margin" Value="0,0,0,14" />
+        </Style>
+
+        <Style x:Key="PropertyRowCompactStyle" TargetType="StackPanel" BasedOn="{StaticResource PropertyRowStyle}">
+            <Setter Property="Margin" Value="0,0,0,4" />
+        </Style>
+
+        <Style x:Key="LayerSectionSpacingStyle" TargetType="StackPanel">
+            <Setter Property="Margin" Value="0,0,0,14" />
+        </Style>
+
+        <Style x:Key="TextLayerSectionStyle" TargetType="StackPanel" BasedOn="{StaticResource LayerSectionSpacingStyle}">
+            <Setter Property="Visibility" Value="Collapsed" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsTextLayerSelected}" Value="True">
+                    <Setter Property="Visibility" Value="Visible" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="ImageLayerSectionStyle" TargetType="StackPanel" BasedOn="{StaticResource LayerSectionSpacingStyle}">
+            <Setter Property="Visibility" Value="Collapsed" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsImageLayerSelected}" Value="True">
+                    <Setter Property="Visibility" Value="Visible" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="PropertySliderStyle" TargetType="Slider">
+            <Setter Property="Margin" Value="0,0,8,0" />
+            <Setter Property="behaviors:SliderUndoGestureBehavior.IsEnabled" Value="True" />
+        </Style>
+
+        <Style x:Key="PropertyNumericTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource NumericValueEditorStyle}">
+            <Setter Property="ToolTip" Value="Click to type a value" />
+            <Setter Property="behaviors:NumericEditorBehavior.IsEnabled" Value="True" />
+        </Style>
     </Window.Resources>
 
     <Window.InputBindings>
@@ -186,17 +229,7 @@
                     <Border Padding="0,0,12,0">
                     <StackPanel Margin="12,12,0,0"
                                 HorizontalAlignment="Stretch">
-                        <StackPanel Margin="0,0,0,14">
-                            <StackPanel.Style>
-                                <Style TargetType="StackPanel">
-                                    <Setter Property="Visibility" Value="Collapsed" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsTextLayerSelected}" Value="True">
-                                            <Setter Property="Visibility" Value="Visible" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </StackPanel.Style>
+                        <StackPanel Style="{StaticResource TextLayerSectionStyle}">
 
                             <StackPanel Margin="0,0,0,14">
                                 <TextBlock Text="Text" Style="{DynamicResource FieldLabelStyle}" />
@@ -212,7 +245,7 @@
                                           SelectedItem="{Binding SelectedFontFamily, UpdateSourceTrigger=PropertyChanged}" />
                             </StackPanel>
 
-                            <StackPanel Margin="0,0,0,14">
+                            <StackPanel Style="{StaticResource PropertyRowStyle}">
                                 <TextBlock Text="Font Size" Style="{DynamicResource FieldLabelStyle}" />
                                 <Grid>
                                     <Grid.ColumnDefinitions>
@@ -220,18 +253,14 @@
                                         <ColumnDefinition Width="56" />
                                     </Grid.ColumnDefinitions>
                                     <Slider Grid.Column="0"
+                                            Style="{StaticResource PropertySliderStyle}"
                                             Value="{Binding SelectedFontSize, UpdateSourceTrigger=PropertyChanged}"
                                             Minimum="8"
-                                            Maximum="200"
-                                            Thumb.DragStarted="OnPropertySliderDragStarted"
-                                            Thumb.DragCompleted="OnPropertySliderDragCompleted"
-                                            Margin="0,0,8,0" />
+                                            Maximum="200" />
                                     <TextBox Grid.Column="1"
-                                             Style="{DynamicResource NumericValueEditorStyle}"
+                                             Style="{StaticResource PropertyNumericTextBoxStyle}"
                                              Text="{Binding SelectedFontSize, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat=F0}"
-                                             ToolTip="Click to type a value"
-                                             GotKeyboardFocus="OnNumericEditorGotKeyboardFocus"
-                                             KeyDown="OnNumericEditorKeyDown" />
+                                             />
                                 </Grid>
                             </StackPanel>
 
@@ -252,24 +281,14 @@
                             </StackPanel>
                         </StackPanel>
 
-                        <StackPanel Margin="0,0,0,14">
-                            <StackPanel.Style>
-                                <Style TargetType="StackPanel">
-                                    <Setter Property="Visibility" Value="Collapsed" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsImageLayerSelected}" Value="True">
-                                            <Setter Property="Visibility" Value="Visible" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </StackPanel.Style>
+                        <StackPanel Style="{StaticResource ImageLayerSectionStyle}">
 
                             <TextBlock Text="Image File" Style="{DynamicResource FieldLabelStyle}" />
                             <TextBox Text="{Binding SelectedImagePath}" IsReadOnly="True" TextWrapping="Wrap" Margin="0,0,0,8" />
                             <Button Command="{Binding ReplaceImageCommand}" Content="Choose Image" Width="130" />
                         </StackPanel>
 
-                        <StackPanel Margin="0,0,0,14">
+                        <StackPanel Style="{StaticResource PropertyRowStyle}">
                             <TextBlock Text="Position X" Style="{DynamicResource FieldLabelStyle}" />
                             <Grid>
                                 <Grid.ColumnDefinitions>
@@ -277,22 +296,18 @@
                                     <ColumnDefinition Width="56" />
                                 </Grid.ColumnDefinitions>
                                 <Slider Grid.Column="0"
+                                        Style="{StaticResource PropertySliderStyle}"
                                         Value="{Binding SelectedPositionX, UpdateSourceTrigger=PropertyChanged}"
                                         Minimum="0"
-                                        Maximum="1920"
-                                        Thumb.DragStarted="OnPropertySliderDragStarted"
-                                        Thumb.DragCompleted="OnPropertySliderDragCompleted"
-                                        Margin="0,0,8,0" />
+                                        Maximum="1920" />
                                 <TextBox Grid.Column="1"
-                                         Style="{DynamicResource NumericValueEditorStyle}"
+                                         Style="{StaticResource PropertyNumericTextBoxStyle}"
                                          Text="{Binding SelectedPositionX, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat=F0}"
-                                         ToolTip="Click to type a value"
-                                         GotKeyboardFocus="OnNumericEditorGotKeyboardFocus"
-                                         KeyDown="OnNumericEditorKeyDown" />
+                                         />
                             </Grid>
                         </StackPanel>
 
-                        <StackPanel Margin="0,0,0,14">
+                        <StackPanel Style="{StaticResource PropertyRowStyle}">
                             <TextBlock Text="Position Y" Style="{DynamicResource FieldLabelStyle}" />
                             <Grid>
                                 <Grid.ColumnDefinitions>
@@ -300,22 +315,18 @@
                                     <ColumnDefinition Width="56" />
                                 </Grid.ColumnDefinitions>
                                 <Slider Grid.Column="0"
+                                        Style="{StaticResource PropertySliderStyle}"
                                         Value="{Binding SelectedPositionY, UpdateSourceTrigger=PropertyChanged}"
                                         Minimum="0"
-                                        Maximum="1080"
-                                        Thumb.DragStarted="OnPropertySliderDragStarted"
-                                        Thumb.DragCompleted="OnPropertySliderDragCompleted"
-                                        Margin="0,0,8,0" />
+                                        Maximum="1080" />
                                 <TextBox Grid.Column="1"
-                                         Style="{DynamicResource NumericValueEditorStyle}"
+                                         Style="{StaticResource PropertyNumericTextBoxStyle}"
                                          Text="{Binding SelectedPositionY, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat=F0}"
-                                         ToolTip="Click to type a value"
-                                         GotKeyboardFocus="OnNumericEditorGotKeyboardFocus"
-                                         KeyDown="OnNumericEditorKeyDown" />
+                                         />
                             </Grid>
                         </StackPanel>
 
-                        <StackPanel Margin="0,0,0,14">
+                        <StackPanel Style="{StaticResource PropertyRowStyle}">
                             <TextBlock Text="Scale X" Style="{DynamicResource FieldLabelStyle}" />
                             <Grid>
                                 <Grid.ColumnDefinitions>
@@ -323,22 +334,18 @@
                                     <ColumnDefinition Width="56" />
                                 </Grid.ColumnDefinitions>
                                 <Slider Grid.Column="0"
+                                        Style="{StaticResource PropertySliderStyle}"
                                         Value="{Binding SelectedScaleX, UpdateSourceTrigger=PropertyChanged}"
                                         Minimum="0.1"
-                                        Maximum="3"
-                                        Thumb.DragStarted="OnPropertySliderDragStarted"
-                                        Thumb.DragCompleted="OnPropertySliderDragCompleted"
-                                        Margin="0,0,8,0" />
+                                        Maximum="3" />
                                 <TextBox Grid.Column="1"
-                                         Style="{DynamicResource NumericValueEditorStyle}"
+                                         Style="{StaticResource PropertyNumericTextBoxStyle}"
                                          Text="{Binding SelectedScaleX, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat=F2}"
-                                         ToolTip="Click to type a value"
-                                         GotKeyboardFocus="OnNumericEditorGotKeyboardFocus"
-                                         KeyDown="OnNumericEditorKeyDown" />
+                                         />
                             </Grid>
                         </StackPanel>
 
-                        <StackPanel Margin="0,0,0,14">
+                        <StackPanel Style="{StaticResource PropertyRowStyle}">
                             <TextBlock Text="Scale Y" Style="{DynamicResource FieldLabelStyle}" />
                             <Grid>
                                 <Grid.ColumnDefinitions>
@@ -346,32 +353,18 @@
                                     <ColumnDefinition Width="56" />
                                 </Grid.ColumnDefinitions>
                                 <Slider Grid.Column="0"
+                                        Style="{StaticResource PropertySliderStyle}"
                                         Value="{Binding SelectedScaleY, UpdateSourceTrigger=PropertyChanged}"
                                         Minimum="0.1"
-                                        Maximum="3"
-                                        Thumb.DragStarted="OnPropertySliderDragStarted"
-                                        Thumb.DragCompleted="OnPropertySliderDragCompleted"
-                                        Margin="0,0,8,0" />
+                                        Maximum="3" />
                                 <TextBox Grid.Column="1"
-                                         Style="{DynamicResource NumericValueEditorStyle}"
+                                         Style="{StaticResource PropertyNumericTextBoxStyle}"
                                          Text="{Binding SelectedScaleY, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat=F2}"
-                                         ToolTip="Click to type a value"
-                                         GotKeyboardFocus="OnNumericEditorGotKeyboardFocus"
-                                         KeyDown="OnNumericEditorKeyDown" />
+                                         />
                             </Grid>
                         </StackPanel>
 
-                        <StackPanel>
-                            <StackPanel.Style>
-                                <Style TargetType="StackPanel">
-                                    <Setter Property="Visibility" Value="Collapsed" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsTextLayerSelected}" Value="True">
-                                            <Setter Property="Visibility" Value="Visible" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </StackPanel.Style>
+                        <StackPanel Style="{StaticResource TextLayerSectionStyle}" Margin="0">
 
                             <CheckBox IsChecked="{Binding SelectedOutlineEnabled, UpdateSourceTrigger=PropertyChanged}"
                                       Content="Enable Outline"
@@ -393,7 +386,7 @@
                                 </StackPanel>
                             </StackPanel>
 
-                            <StackPanel Margin="0,0,0,4">
+                            <StackPanel Style="{StaticResource PropertyRowCompactStyle}">
                                 <TextBlock Text="Outline Thickness" Style="{DynamicResource FieldLabelStyle}" />
                                 <Grid>
                                     <Grid.ColumnDefinitions>
@@ -401,18 +394,14 @@
                                         <ColumnDefinition Width="56" />
                                     </Grid.ColumnDefinitions>
                                     <Slider Grid.Column="0"
+                                            Style="{StaticResource PropertySliderStyle}"
                                             Value="{Binding SelectedOutlineThickness, UpdateSourceTrigger=PropertyChanged}"
                                             Minimum="0.5"
-                                            Maximum="20"
-                                            Thumb.DragStarted="OnPropertySliderDragStarted"
-                                            Thumb.DragCompleted="OnPropertySliderDragCompleted"
-                                            Margin="0,0,8,0" />
+                                            Maximum="20" />
                                     <TextBox Grid.Column="1"
-                                             Style="{DynamicResource NumericValueEditorStyle}"
+                                             Style="{StaticResource PropertyNumericTextBoxStyle}"
                                              Text="{Binding SelectedOutlineThickness, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat=F1}"
-                                             ToolTip="Click to type a value"
-                                             GotKeyboardFocus="OnNumericEditorGotKeyboardFocus"
-                                             KeyDown="OnNumericEditorKeyDown" />
+                                             />
                                 </Grid>
                             </StackPanel>
                         </StackPanel>
