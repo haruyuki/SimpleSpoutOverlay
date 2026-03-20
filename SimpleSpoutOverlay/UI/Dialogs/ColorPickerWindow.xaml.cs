@@ -4,7 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 
-namespace SpoutText.UI.Dialogs;
+namespace SimpleSpoutOverlay.UI.Dialogs;
 
 public partial class ColorPickerWindow
 {

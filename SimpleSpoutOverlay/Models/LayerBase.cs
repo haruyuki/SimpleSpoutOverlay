@@ -1,6 +1,6 @@
 ﻿using JetBrains.Annotations;
 
-namespace SpoutText.Models;
+namespace SimpleSpoutOverlay.Models;
 
 /// Base layer type used by the renderer and layer list.
 public abstract class LayerBase

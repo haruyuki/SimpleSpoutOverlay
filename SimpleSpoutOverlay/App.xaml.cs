@@ -1,4 +1,4 @@
-﻿namespace SpoutText;
+﻿namespace SimpleSpoutOverlay;
 
 /// <summary>
 /// Interaction logic for App.xaml

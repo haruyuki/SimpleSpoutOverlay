@@ -1,6 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 
-namespace SpoutText.Models
+namespace SimpleSpoutOverlay.Models
 {
     /// Manages the collection of layers, including ordering and selection.
     public class LayerManager

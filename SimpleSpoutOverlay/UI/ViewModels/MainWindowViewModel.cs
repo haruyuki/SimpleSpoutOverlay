@@ -9,11 +9,11 @@ using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using JetBrains.Annotations;
 using Microsoft.Win32;
-using SpoutText.Models;
-using SpoutText.Rendering;
-using SpoutText.Services;
+using SimpleSpoutOverlay.Models;
+using SimpleSpoutOverlay.Rendering;
+using SimpleSpoutOverlay.Services;
 
-namespace SpoutText.UI.ViewModels
+namespace SimpleSpoutOverlay.UI.ViewModels
 {
     public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     {
@@ -855,10 +855,10 @@ namespace SpoutText.UI.ViewModels
         {
             SaveFileDialog dialog = new()
             {
-                Filter = "SpoutText Session (*.json)|*.json|All Files (*.*)|*.*",
+                Filter = "SimpleSpoutOverlay Session (*.json)|*.json|All Files (*.*)|*.*",
                 DefaultExt = ".json",
                 AddExtension = true,
-                FileName = "spouttext-session.json",
+                FileName = "simplespoutoverlay-session.json",
                 InitialDirectory = Path.GetDirectoryName(_sessionPersistenceService.DefaultSessionPath)
             };
 
@@ -879,7 +879,7 @@ namespace SpoutText.UI.ViewModels
         {
             OpenFileDialog dialog = new()
             {
-                Filter = "SpoutText Session (*.json)|*.json|All Files (*.*)|*.*",
+                Filter = "SimpleSpoutOverlay Session (*.json)|*.json|All Files (*.*)|*.*",
                 DefaultExt = ".json",
                 CheckFileExists = true,
                 InitialDirectory = Path.GetDirectoryName(_sessionPersistenceService.DefaultSessionPath)

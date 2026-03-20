@@ -1,8 +1,8 @@
 ﻿using System.IO;
 using System.Text.Json;
-using SpoutText.Models;
+using SimpleSpoutOverlay.Models;
 
-namespace SpoutText.Services;
+namespace SimpleSpoutOverlay.Services;
 
 /// <summary>
 /// Handles saving and loading session files from disk.
@@ -20,7 +20,7 @@ public sealed class SessionPersistenceService
         get
         {
             string appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            return Path.Combine(appData, "SpoutText", "session.json");
+            return Path.Combine(appData, "SimpleSpoutOverlay", "session.json");
         }
     }
 

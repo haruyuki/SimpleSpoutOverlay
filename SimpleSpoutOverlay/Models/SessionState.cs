@@ -1,4 +1,4 @@
-﻿namespace SpoutText.Models;
+﻿namespace SimpleSpoutOverlay.Models;
 
 /// Serializable application state for restoring the previous editing session.
 public sealed class SessionState

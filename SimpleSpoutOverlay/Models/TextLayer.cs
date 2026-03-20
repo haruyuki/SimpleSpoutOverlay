@@ -1,6 +1,6 @@
 ﻿using System.Windows.Media;
 
-namespace SpoutText.Models
+namespace SimpleSpoutOverlay.Models
 {
     /// Represents a single text layer with formatting, color, position, and outline properties.
     public sealed class TextLayer(string text, string fontFamily = "Arial", double fontSize = 48) : LayerBase

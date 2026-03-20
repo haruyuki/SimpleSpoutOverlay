@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-namespace SpoutText.Models;
+namespace SimpleSpoutOverlay.Models;
 
 public sealed class ImageLayer(string imagePath) : LayerBase
 {

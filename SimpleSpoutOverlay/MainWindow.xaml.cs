@@ -5,11 +5,11 @@ using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using SpoutText.Models;
-using SpoutText.UI.Dialogs;
-using SpoutText.UI.ViewModels;
+using SimpleSpoutOverlay.Models;
+using SimpleSpoutOverlay.UI.Dialogs;
+using SimpleSpoutOverlay.UI.ViewModels;
 
-namespace SpoutText;
+namespace SimpleSpoutOverlay;
 
 /// <summary>
 /// Interaction logic for MainWindow.xaml

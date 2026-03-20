@@ -3,7 +3,7 @@ using System.Windows.Media.Imaging;
 using Spout.Interop;
 using Spout.NETCore;
 
-namespace SpoutText.Rendering
+namespace SimpleSpoutOverlay.Rendering
 {
     /// <summary>
     /// Manages Spout2 output for text layer rendering.
@@ -21,7 +21,7 @@ namespace SpoutText.Rendering
         /// Initializes the Spout sender with the specified name.
         /// Must be called before SendFrame.
         /// </summary>
-        public bool Initialize(string senderName = "SpoutText")
+        public bool Initialize(string senderName = "SimpleSpoutOverlay")
         {
             if (_isInitialized)
                 return true;

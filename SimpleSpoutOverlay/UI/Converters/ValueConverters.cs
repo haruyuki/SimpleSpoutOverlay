@@ -3,7 +3,7 @@ using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
 
-namespace SpoutText.UI.Converters
+namespace SimpleSpoutOverlay.UI.Converters
 {
     public class ColorToBrushConverter : IValueConverter
     {

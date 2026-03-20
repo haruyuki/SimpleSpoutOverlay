@@ -3,9 +3,9 @@ using System.IO;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using SpoutText.Models;
+using SimpleSpoutOverlay.Models;
 
-namespace SpoutText.Rendering
+namespace SimpleSpoutOverlay.Rendering
 {
     /// Renders text and image layers to a bitmap with transparent background.
     /// Uses FormattedText and Geometry for text outline support.

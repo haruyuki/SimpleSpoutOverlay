@@ -1,6 +1,6 @@
 ﻿using System.Windows.Media.Imaging;
 
-namespace SpoutText.Rendering
+namespace SimpleSpoutOverlay.Rendering
 {
     /// <summary>
     /// Converts WPF RenderTargetBitmap to byte array format suitable for Spout output.
