@@ -178,9 +178,14 @@
             <DockPanel LastChildFill="True">
                 <TextBlock DockPanel.Dock="Top" Text="Layer Properties" Style="{DynamicResource PanelTitleStyle}" />
 
-                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                <ScrollViewer x:Name="LayerPropertiesScrollViewer"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled"
+                              HorizontalContentAlignment="Stretch"
                               Visibility="{Binding SelectedLayer, Converter={StaticResource SelectedLayerToVisibilityConverter}}">
-                    <StackPanel Margin="12">
+                    <StackPanel Margin="12, 12,0,0"
+                                HorizontalAlignment="Stretch"
+                                Width="{Binding ElementName=LayerPropertiesScrollViewer, Path=ViewportWidth}">
                         <StackPanel Margin="0,0,0,14">
                             <StackPanel.Style>
                                 <Style TargetType="StackPanel">
@@ -195,7 +200,10 @@
 
                             <StackPanel Margin="0,0,0,14">
                                 <TextBlock Text="Text" Style="{DynamicResource FieldLabelStyle}" />
-                                <TextBox Text="{Binding SelectedText, UpdateSourceTrigger=PropertyChanged}" TextWrapping="Wrap" Height="76" />
+                                <TextBox Text="{Binding SelectedText, UpdateSourceTrigger=PropertyChanged}"
+                                         TextWrapping="Wrap"
+                                         Height="76"
+                                         HorizontalAlignment="Stretch" />
                             </StackPanel>
 
                             <StackPanel Margin="0,0,0,14">

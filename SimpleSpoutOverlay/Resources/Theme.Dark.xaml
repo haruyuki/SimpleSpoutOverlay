@@ -26,6 +26,10 @@
     <SolidColorBrush x:Key="Brush.Accent" Color="{StaticResource Color.Accent}" />
     <SolidColorBrush x:Key="Brush.Danger" Color="{StaticResource Color.Danger}" />
     <SolidColorBrush x:Key="Brush.Success" Color="{StaticResource Color.Success}" />
+    <SolidColorBrush x:Key="Brush.ScrollbarTrack" Color="#2A2F38" />
+    <SolidColorBrush x:Key="Brush.ScrollbarThumb" Color="#566072" />
+    <SolidColorBrush x:Key="Brush.ScrollbarThumbHover" Color="#6A7790" />
+    <SolidColorBrush x:Key="Brush.ScrollbarThumbPressed" Color="#7A8AA8" />
 
     <Style TargetType="Window">
         <Setter Property="Background" Value="{DynamicResource Brush.WindowBackground}" />
@@ -223,6 +227,104 @@
     <Style TargetType="ScrollViewer">
         <Setter Property="Background" Value="{DynamicResource Brush.PanelBackground}" />
         <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
+    </Style>
+
+    <Style x:Key="ModernScrollBarPageButtonStyle" TargetType="RepeatButton">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RepeatButton">
+                    <Border Background="{TemplateBinding Background}" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style TargetType="Thumb">
+        <Setter Property="Background" Value="{DynamicResource Brush.ScrollbarThumb}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Thumb">
+                    <Border x:Name="ThumbRoot"
+                            Margin="1"
+                            CornerRadius="4"
+                            Background="{TemplateBinding Background}" />
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="ThumbRoot" Property="Background" Value="{DynamicResource Brush.ScrollbarThumbHover}" />
+                        </Trigger>
+                        <Trigger Property="IsDragging" Value="True">
+                            <Setter TargetName="ThumbRoot" Property="Background" Value="{DynamicResource Brush.ScrollbarThumbPressed}" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <ControlTemplate x:Key="ModernVerticalScrollBarTemplate" TargetType="ScrollBar">
+        <Border Margin="1" Background="{DynamicResource Brush.ScrollbarTrack}" CornerRadius="6">
+            <Track x:Name="PART_Track"
+                   IsDirectionReversed="True"
+                   Focusable="False"
+                   Minimum="{TemplateBinding Minimum}"
+                   Maximum="{TemplateBinding Maximum}"
+                   Value="{TemplateBinding Value}"
+                   ViewportSize="{TemplateBinding ViewportSize}"
+                   Orientation="{TemplateBinding Orientation}">
+                <Track.DecreaseRepeatButton>
+                    <RepeatButton Command="ScrollBar.PageUpCommand" Style="{StaticResource ModernScrollBarPageButtonStyle}" />
+                </Track.DecreaseRepeatButton>
+                <Track.Thumb>
+                    <Thumb MinHeight="28" />
+                </Track.Thumb>
+                <Track.IncreaseRepeatButton>
+                    <RepeatButton Command="ScrollBar.PageDownCommand" Style="{StaticResource ModernScrollBarPageButtonStyle}" />
+                </Track.IncreaseRepeatButton>
+            </Track>
+        </Border>
+    </ControlTemplate>
+
+    <ControlTemplate x:Key="ModernHorizontalScrollBarTemplate" TargetType="ScrollBar">
+        <Border Margin="1" Background="{DynamicResource Brush.ScrollbarTrack}" CornerRadius="6">
+            <Track x:Name="PART_Track"
+                   IsDirectionReversed="False"
+                   Focusable="False"
+                   Minimum="{TemplateBinding Minimum}"
+                   Maximum="{TemplateBinding Maximum}"
+                   Value="{TemplateBinding Value}"
+                   ViewportSize="{TemplateBinding ViewportSize}"
+                   Orientation="{TemplateBinding Orientation}">
+                <Track.DecreaseRepeatButton>
+                    <RepeatButton Command="ScrollBar.PageLeftCommand" Style="{StaticResource ModernScrollBarPageButtonStyle}" />
+                </Track.DecreaseRepeatButton>
+                <Track.Thumb>
+                    <Thumb MinWidth="28" />
+                </Track.Thumb>
+                <Track.IncreaseRepeatButton>
+                    <RepeatButton Command="ScrollBar.PageRightCommand" Style="{StaticResource ModernScrollBarPageButtonStyle}" />
+                </Track.IncreaseRepeatButton>
+            </Track>
+        </Border>
+    </ControlTemplate>
+
+    <Style TargetType="ScrollBar">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Width" Value="12" />
+        <Setter Property="Height" Value="Auto" />
+        <Setter Property="Template" Value="{StaticResource ModernVerticalScrollBarTemplate}" />
+        <Style.Triggers>
+            <Trigger Property="Orientation" Value="Horizontal">
+                <Setter Property="Width" Value="Auto" />
+                <Setter Property="Height" Value="12" />
+                <Setter Property="Template" Value="{StaticResource ModernHorizontalScrollBarTemplate}" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Opacity" Value="0.45" />
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
     <Style TargetType="Slider">
