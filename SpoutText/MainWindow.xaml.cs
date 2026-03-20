@@ -1,5 +1,6 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -95,6 +96,49 @@ public partial class MainWindow : Window
         }
 
         DragDrop.DoDragDrop(listBox, draggedLayer, DragDropEffects.Move);
+    }
+
+    private void OnLayerListPreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (DataContext is not MainWindowViewModel viewModel || Keyboard.Modifiers != ModifierKeys.Control)
+        {
+            return;
+        }
+
+        switch (e.Key)
+        {
+            case Key.Up when viewModel.MoveLayerUpCommand.CanExecute(null):
+                viewModel.MoveLayerUpCommand.Execute(null);
+                e.Handled = true;
+                break;
+            case Key.Down when viewModel.MoveLayerDownCommand.CanExecute(null):
+                viewModel.MoveLayerDownCommand.Execute(null);
+                e.Handled = true;
+                break;
+        }
+    }
+
+    private void OnPropertySliderDragStarted(object sender, DragStartedEventArgs e)
+    {
+        if (DataContext is MainWindowViewModel viewModel)
+        {
+            viewModel.BeginSliderUndoGesture();
+        }
+    }
+
+    private void OnPropertySliderDragCompleted(object sender, DragCompletedEventArgs e)
+    {
+        if (DataContext is MainWindowViewModel viewModel)
+        {
+            if (e.Canceled)
+            {
+                viewModel.CancelSliderUndoGesture();
+            }
+            else
+            {
+                viewModel.CommitSliderUndoGesture();
+            }
+        }
     }
 
     private void OnLayerListDragOver(object sender, DragEventArgs e)

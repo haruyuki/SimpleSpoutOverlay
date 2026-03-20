@@ -26,6 +26,11 @@ namespace SpoutText.UI.ViewModels
         private bool _spoutEnabled;
         private bool _disposed;
         private readonly SessionPersistenceService _sessionPersistenceService;
+        private readonly Stack<SessionState> _undoStack = new();
+        private readonly Stack<SessionState> _redoStack = new();
+        private bool _suppressHistory;
+        private bool _isSliderUndoGestureActive;
+        private SessionState? _sliderUndoSnapshot;
         private readonly DispatcherTimer _toastTimer;
         private string _toastMessage = string.Empty;
         private bool _isToastVisible;
@@ -58,6 +63,10 @@ namespace SpoutText.UI.ViewModels
         [UsedImplicitly]
         public RelayCommand ToggleSpoutCommand { get; }
         [UsedImplicitly]
+        public RelayCommand UndoCommand { get; }
+        [UsedImplicitly]
+        public RelayCommand RedoCommand { get; }
+        [UsedImplicitly]
         public RelayCommand SaveSetupCommand { get; }
         [UsedImplicitly]
         public RelayCommand LoadSetupCommand { get; }
@@ -70,9 +79,11 @@ namespace SpoutText.UI.ViewModels
 
             AddLayerCommand = new RelayCommand(_ => AddLayer());
             DeleteLayerCommand = new RelayCommand(_ => DeleteLayer(), _ => SelectedLayer != null);
-            MoveLayerUpCommand = new RelayCommand(_ => MoveLayerUp(), _ => SelectedLayer != null);
-            MoveLayerDownCommand = new RelayCommand(_ => MoveLayerDown(), _ => SelectedLayer != null);
+            MoveLayerUpCommand = new RelayCommand(_ => MoveLayerUp(), _ => CanMoveLayerUp());
+            MoveLayerDownCommand = new RelayCommand(_ => MoveLayerDown(), _ => CanMoveLayerDown());
             ToggleSpoutCommand = new RelayCommand(_ => ToggleSpout());
+            UndoCommand = new RelayCommand(_ => Undo(), _ => CanUndo);
+            RedoCommand = new RelayCommand(_ => Redo(), _ => CanRedo);
             SaveSetupCommand = new RelayCommand(_ => ExecuteSaveSetup());
             LoadSetupCommand = new RelayCommand(_ => ExecuteLoadSetup());
             _sessionPersistenceService = new SessionPersistenceService();
@@ -189,6 +200,7 @@ namespace SpoutText.UI.ViewModels
             set
             {
                 if (_selectedText == value || _selectedLayer == null) return;
+                PushUndoSnapshot();
                 _selectedText = value;
                 _selectedLayer.Text = value;
                 OnPropertyChanged();
@@ -202,6 +214,7 @@ namespace SpoutText.UI.ViewModels
             set
             {
                 if (_selectedFontFamily == value || _selectedLayer == null) return;
+                PushUndoSnapshot();
                 _selectedFontFamily = value;
                 _selectedLayer.FontFamily = value;
                 OnPropertyChanged();
@@ -215,6 +228,7 @@ namespace SpoutText.UI.ViewModels
             set
             {
                 if (!(Math.Abs(_selectedFontSize - value) > 0.01) || _selectedLayer == null) return;
+                RecordPropertyUndo();
                 _selectedFontSize = value;
                 _selectedLayer.FontSize = value;
                 OnPropertyChanged();
@@ -228,6 +242,7 @@ namespace SpoutText.UI.ViewModels
             set
             {
                 if (_selectedFillColor == value || _selectedLayer == null) return;
+                PushUndoSnapshot();
                 _selectedFillColor = value;
                 _selectedLayer.FillColor = value;
                 OnPropertyChanged();
@@ -241,6 +256,7 @@ namespace SpoutText.UI.ViewModels
             set
             {
                 if (!(Math.Abs(_selectedPositionX - value) > 0.01) || _selectedLayer == null) return;
+                RecordPropertyUndo();
                 _selectedPositionX = value;
                 _selectedLayer.PositionX = value;
                 OnPropertyChanged();
@@ -254,6 +270,7 @@ namespace SpoutText.UI.ViewModels
             set
             {
                 if (!(Math.Abs(_selectedPositionY - value) > 0.01) || _selectedLayer == null) return;
+                RecordPropertyUndo();
                 _selectedPositionY = value;
                 _selectedLayer.PositionY = value;
                 OnPropertyChanged();
@@ -267,6 +284,7 @@ namespace SpoutText.UI.ViewModels
             set
             {
                 if (!(Math.Abs(_selectedScaleX - value) > 0.01) || _selectedLayer == null) return;
+                RecordPropertyUndo();
                 _selectedScaleX = value;
                 _selectedLayer.ScaleX = value;
                 OnPropertyChanged();
@@ -280,6 +298,7 @@ namespace SpoutText.UI.ViewModels
             set
             {
                 if (!(Math.Abs(_selectedScaleY - value) > 0.01) || _selectedLayer == null) return;
+                RecordPropertyUndo();
                 _selectedScaleY = value;
                 _selectedLayer.ScaleY = value;
                 OnPropertyChanged();
@@ -293,6 +312,7 @@ namespace SpoutText.UI.ViewModels
             set
             {
                 if (_selectedOutlineEnabled == value || _selectedLayer == null) return;
+                PushUndoSnapshot();
                 _selectedOutlineEnabled = value;
                 _selectedLayer.OutlineEnabled = value;
                 OnPropertyChanged();
@@ -306,6 +326,7 @@ namespace SpoutText.UI.ViewModels
             set
             {
                 if (_selectedOutlineColor == value || _selectedLayer == null) return;
+                PushUndoSnapshot();
                 _selectedOutlineColor = value;
                 _selectedLayer.OutlineColor = value;
                 OnPropertyChanged();
@@ -319,6 +340,7 @@ namespace SpoutText.UI.ViewModels
             set
             {
                 if (!(Math.Abs(_selectedOutlineThickness - value) > 0.01) || _selectedLayer == null) return;
+                RecordPropertyUndo();
                 _selectedOutlineThickness = value;
                 _selectedLayer.OutlineThickness = value;
                 OnPropertyChanged();
@@ -340,6 +362,12 @@ namespace SpoutText.UI.ViewModels
         }
         
         [UsedImplicitly]
+        public bool CanUndo => _undoStack.Count > 0;
+
+        [UsedImplicitly]
+        public bool CanRedo => _redoStack.Count > 0;
+
+        [UsedImplicitly]
         public static IEnumerable<string> AvailableFonts
         {
             get
@@ -351,6 +379,7 @@ namespace SpoutText.UI.ViewModels
 
         private void AddLayer()
         {
+            PushUndoSnapshot();
             TextLayer layer = new($"Text {_layerManager.Layers.Count + 1}");
             _layerManager.AddLayer(layer);
             SelectedLayer = layer;
@@ -359,6 +388,8 @@ namespace SpoutText.UI.ViewModels
         private void DeleteLayer()
         {
             if (SelectedLayer == null) return;
+
+            PushUndoSnapshot();
             int removedIndex = _layerManager.Layers.IndexOf(SelectedLayer);
             _layerManager.RemoveLayer(SelectedLayer);
 
@@ -374,18 +405,16 @@ namespace SpoutText.UI.ViewModels
 
         private void MoveLayerUp()
         {
-            if (SelectedLayer != null)
-            {
-                _layerManager.MoveLayerUp(SelectedLayer);
-            }
+            if (SelectedLayer == null) return;
+            PushUndoSnapshot();
+            _layerManager.MoveLayerUp(SelectedLayer);
         }
 
         private void MoveLayerDown()
         {
-            if (SelectedLayer != null)
-            {
-                _layerManager.MoveLayerDown(SelectedLayer);
-            }
+            if (SelectedLayer == null) return;
+            PushUndoSnapshot();
+            _layerManager.MoveLayerDown(SelectedLayer);
         }
 
         public void ReorderLayer(TextLayer draggedLayer, TextLayer? targetLayer, bool insertAfter)
@@ -423,6 +452,7 @@ namespace SpoutText.UI.ViewModels
                 return;
             }
 
+            PushUndoSnapshot();
             _layerManager.MoveLayer(fromIndex, toIndex);
             SelectedLayer = draggedLayer;
         }
@@ -498,6 +528,182 @@ namespace SpoutText.UI.ViewModels
             }
         }
 
+        private void PushUndoSnapshot()
+        {
+            if (_suppressHistory)
+            {
+                return;
+            }
+
+            _undoStack.Push(CloneSessionState(CaptureSessionState()));
+            _redoStack.Clear();
+            NotifyHistoryStateChanged();
+        }
+
+        private void RecordPropertyUndo()
+        {
+            if (_isSliderUndoGestureActive)
+            {
+                return;
+            }
+
+            PushUndoSnapshot();
+        }
+
+        public void BeginSliderUndoGesture()
+        {
+            if (_suppressHistory || _isSliderUndoGestureActive)
+            {
+                return;
+            }
+
+            _sliderUndoSnapshot = CloneSessionState(CaptureSessionState());
+            _isSliderUndoGestureActive = true;
+        }
+
+        public void CommitSliderUndoGesture()
+        {
+            if (!_isSliderUndoGestureActive)
+            {
+                return;
+            }
+
+            SessionState? initialSnapshot = _sliderUndoSnapshot;
+            _sliderUndoSnapshot = null;
+            _isSliderUndoGestureActive = false;
+
+            if (initialSnapshot == null)
+            {
+                return;
+            }
+
+            SessionState currentSnapshot = CaptureSessionState();
+            if (AreSessionStatesEquivalent(initialSnapshot, currentSnapshot))
+            {
+                return;
+            }
+
+            _undoStack.Push(initialSnapshot);
+            _redoStack.Clear();
+            NotifyHistoryStateChanged();
+        }
+
+        public void CancelSliderUndoGesture()
+        {
+            _sliderUndoSnapshot = null;
+            _isSliderUndoGestureActive = false;
+        }
+
+        private void Undo()
+        {
+            if (!CanUndo)
+            {
+                return;
+            }
+
+            _redoStack.Push(CloneSessionState(CaptureSessionState()));
+            SessionState previous = _undoStack.Pop();
+            RestoreSessionState(previous, clearHistory: false);
+            NotifyHistoryStateChanged();
+        }
+
+        private void Redo()
+        {
+            if (!CanRedo)
+            {
+                return;
+            }
+
+            _undoStack.Push(CloneSessionState(CaptureSessionState()));
+            SessionState next = _redoStack.Pop();
+            RestoreSessionState(next, clearHistory: false);
+            NotifyHistoryStateChanged();
+        }
+
+        private void NotifyHistoryStateChanged()
+        {
+            OnPropertyChanged(nameof(CanUndo));
+            OnPropertyChanged(nameof(CanRedo));
+            CommandManager.InvalidateRequerySuggested();
+        }
+
+        private static SessionState CloneSessionState(SessionState source)
+        {
+            return new SessionState
+            {
+                Version = source.Version,
+                SelectedLayerIndex = source.SelectedLayerIndex,
+                Layers = source.Layers
+                    .Select(layer => new TextLayerState
+                    {
+                        Text = layer.Text,
+                        FontFamily = layer.FontFamily,
+                        FontSize = layer.FontSize,
+                        FillColor = layer.FillColor,
+                        PositionX = layer.PositionX,
+                        PositionY = layer.PositionY,
+                        ScaleX = layer.ScaleX,
+                        ScaleY = layer.ScaleY,
+                        OutlineEnabled = layer.OutlineEnabled,
+                        OutlineColor = layer.OutlineColor,
+                        OutlineThickness = layer.OutlineThickness
+                    })
+                    .ToList()
+            };
+        }
+
+        private static bool AreSessionStatesEquivalent(SessionState left, SessionState right)
+        {
+            if (left.SelectedLayerIndex != right.SelectedLayerIndex || left.Layers.Count != right.Layers.Count)
+            {
+                return false;
+            }
+
+            for (int index = 0; index < left.Layers.Count; index++)
+            {
+                TextLayerState a = left.Layers[index];
+                TextLayerState b = right.Layers[index];
+
+                if (a.Text != b.Text ||
+                    a.FontFamily != b.FontFamily ||
+                    Math.Abs(a.FontSize - b.FontSize) > 0.001 ||
+                    a.FillColor != b.FillColor ||
+                    Math.Abs(a.PositionX - b.PositionX) > 0.001 ||
+                    Math.Abs(a.PositionY - b.PositionY) > 0.001 ||
+                    Math.Abs(a.ScaleX - b.ScaleX) > 0.001 ||
+                    Math.Abs(a.ScaleY - b.ScaleY) > 0.001 ||
+                    a.OutlineEnabled != b.OutlineEnabled ||
+                    a.OutlineColor != b.OutlineColor ||
+                    Math.Abs(a.OutlineThickness - b.OutlineThickness) > 0.001)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private bool CanMoveLayerUp()
+        {
+            if (SelectedLayer == null)
+            {
+                return false;
+            }
+
+            return _layerManager.Layers.IndexOf(SelectedLayer) > 0;
+        }
+
+        private bool CanMoveLayerDown()
+        {
+            if (SelectedLayer == null)
+            {
+                return false;
+            }
+
+            int index = _layerManager.Layers.IndexOf(SelectedLayer);
+            return index >= 0 && index < _layerManager.Layers.Count - 1;
+        }
+
         private void ToggleSpout()
         {
             if (_spoutManager == null)
@@ -570,6 +776,7 @@ namespace SpoutText.UI.ViewModels
                 SessionState? state = SessionPersistenceService.LoadFromPath(dialog.FileName);
                 if (state != null)
                 {
+                    PushUndoSnapshot();
                     RestoreSessionState(state);
                     ShowToast($"Setup loaded: {Path.GetFileName(dialog.FileName)}");
                 }
@@ -592,7 +799,7 @@ namespace SpoutText.UI.ViewModels
                 SessionState? state = SessionPersistenceService.LoadFromPath(_sessionPersistenceService.DefaultSessionPath);
                 if (state != null)
                 {
-                    RestoreSessionState(state);
+                    RestoreSessionState(state, clearHistory: true);
                 }
             }
             catch (Exception ex)
@@ -641,27 +848,44 @@ namespace SpoutText.UI.ViewModels
             };
         }
 
-        private void RestoreSessionState(SessionState state)
+        private void RestoreSessionState(SessionState state, bool clearHistory = false)
         {
-            _layerManager.Layers.Clear();
+            bool previousSuppressHistory = _suppressHistory;
+            _suppressHistory = true;
+            try
+            {
+                _layerManager.Layers.Clear();
 
-            foreach (TextLayerState layerState in state.Layers)
+                foreach (TextLayerState layerState in state.Layers)
+                {
+                    _layerManager.Layers.Add(FromTextLayerState(layerState));
+                }
+
+                if (_layerManager.Layers.Count == 0)
+                {
+                    SelectedLayer = null;
+                }
+                else if (state.SelectedLayerIndex >= 0 && state.SelectedLayerIndex < _layerManager.Layers.Count)
+                {
+                    SelectedLayer = _layerManager.Layers[state.SelectedLayerIndex];
+                }
+                else
+                {
+                    SelectedLayer = _layerManager.Layers[0];
+                }
+            }
+            finally
             {
-                _layerManager.Layers.Add(FromTextLayerState(layerState));
+                _suppressHistory = previousSuppressHistory;
             }
 
-            if (_layerManager.Layers.Count == 0)
+            if (clearHistory)
             {
-                SelectedLayer = null;
+                _undoStack.Clear();
+                _redoStack.Clear();
             }
-            else if (state.SelectedLayerIndex >= 0 && state.SelectedLayerIndex < _layerManager.Layers.Count)
-            {
-                SelectedLayer = _layerManager.Layers[state.SelectedLayerIndex];
-            }
-            else
-            {
-                SelectedLayer = _layerManager.Layers[0];
-            }
+
+            NotifyHistoryStateChanged();
 
             RefreshPreview();
         }

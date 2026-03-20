@@ -18,6 +18,15 @@
         <converters:SelectedLayerToVisibilityConverter x:Key="SelectedLayerToVisibilityConverter" />
     </Window.Resources>
 
+    <Window.InputBindings>
+        <KeyBinding Command="{Binding UndoCommand}" Key="Z" Modifiers="Ctrl" />
+        <KeyBinding Command="{Binding RedoCommand}" Key="Y" Modifiers="Ctrl" />
+        <KeyBinding Command="{Binding SaveSetupCommand}" Key="S" Modifiers="Ctrl" />
+        <KeyBinding Command="{Binding LoadSetupCommand}" Key="O" Modifiers="Ctrl" />
+        <KeyBinding Command="{Binding AddLayerCommand}" Key="N" Modifiers="Ctrl" />
+        <KeyBinding Command="{Binding DeleteLayerCommand}" Key="Delete" Modifiers="Ctrl" />
+    </Window.InputBindings>
+
     <Grid Margin="14" Background="{DynamicResource Brush.WindowBackground}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -83,6 +92,7 @@
                          ItemsSource="{Binding Layers}"
                          SelectedItem="{Binding SelectedLayer}"
                          AllowDrop="True"
+                         PreviewKeyDown="OnLayerListPreviewKeyDown"
                          PreviewMouseLeftButtonDown="OnLayerListPreviewMouseLeftButtonDown"
                          PreviewMouseMove="OnLayerListPreviewMouseMove"
                          DragOver="OnLayerListDragOver"
@@ -188,6 +198,8 @@
                                         Value="{Binding SelectedFontSize, UpdateSourceTrigger=PropertyChanged}"
                                         Minimum="8"
                                         Maximum="200"
+                                        Thumb.DragStarted="OnPropertySliderDragStarted"
+                                        Thumb.DragCompleted="OnPropertySliderDragCompleted"
                                         Margin="0,0,8,0" />
                                 <TextBlock Grid.Column="1"
                                            Text="{Binding SelectedFontSize, StringFormat='F0'}"
@@ -223,6 +235,8 @@
                                         Value="{Binding SelectedPositionX, UpdateSourceTrigger=PropertyChanged}"
                                         Minimum="0"
                                         Maximum="1920"
+                                        Thumb.DragStarted="OnPropertySliderDragStarted"
+                                        Thumb.DragCompleted="OnPropertySliderDragCompleted"
                                         Margin="0,0,8,0" />
                                 <TextBlock Grid.Column="1"
                                            Text="{Binding SelectedPositionX, StringFormat='F0'}"
@@ -242,6 +256,8 @@
                                         Value="{Binding SelectedPositionY, UpdateSourceTrigger=PropertyChanged}"
                                         Minimum="0"
                                         Maximum="1080"
+                                        Thumb.DragStarted="OnPropertySliderDragStarted"
+                                        Thumb.DragCompleted="OnPropertySliderDragCompleted"
                                         Margin="0,0,8,0" />
                                 <TextBlock Grid.Column="1"
                                            Text="{Binding SelectedPositionY, StringFormat='F0'}"
@@ -261,6 +277,8 @@
                                         Value="{Binding SelectedScaleX, UpdateSourceTrigger=PropertyChanged}"
                                         Minimum="0.1"
                                         Maximum="3"
+                                        Thumb.DragStarted="OnPropertySliderDragStarted"
+                                        Thumb.DragCompleted="OnPropertySliderDragCompleted"
                                         Margin="0,0,8,0" />
                                 <TextBlock Grid.Column="1"
                                            Text="{Binding SelectedScaleX, StringFormat='F2'}"
@@ -280,6 +298,8 @@
                                         Value="{Binding SelectedScaleY, UpdateSourceTrigger=PropertyChanged}"
                                         Minimum="0.1"
                                         Maximum="3"
+                                        Thumb.DragStarted="OnPropertySliderDragStarted"
+                                        Thumb.DragCompleted="OnPropertySliderDragCompleted"
                                         Margin="0,0,8,0" />
                                 <TextBlock Grid.Column="1"
                                            Text="{Binding SelectedScaleY, StringFormat='F2'}"
@@ -319,6 +339,8 @@
                                         Value="{Binding SelectedOutlineThickness, UpdateSourceTrigger=PropertyChanged}"
                                         Minimum="0.5"
                                         Maximum="20"
+                                        Thumb.DragStarted="OnPropertySliderDragStarted"
+                                        Thumb.DragCompleted="OnPropertySliderDragCompleted"
                                         Margin="0,0,8,0" />
                                 <TextBlock Grid.Column="1"
                                            Text="{Binding SelectedOutlineThickness, StringFormat='F1'}"
