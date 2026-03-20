@@ -2,11 +2,48 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Choose Color"
-        Width="390"
-        Height="360"
+        Width="450"
+        MinHeight="500"
+        SizeToContent="Height"
         ResizeMode="NoResize"
         WindowStartupLocation="CenterOwner"
         Background="{DynamicResource Brush.WindowBackground}">
+    <Window.Resources>
+        <Style x:Key="HueThumbOnlySliderStyle" TargetType="Slider">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Slider">
+                        <Grid>
+                            <Track x:Name="PART_Track"
+                                   IsDirectionReversed="{TemplateBinding IsDirectionReversed}">
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Command="Slider.DecreaseLarge"
+                                                  Focusable="False"
+                                                  Opacity="0"
+                                                  Background="Transparent"
+                                                  BorderThickness="0" />
+                                </Track.DecreaseRepeatButton>
+                                <Track.Thumb>
+                                    <Thumb Width="12"
+                                           Height="20"
+                                           Background="White"
+                                           BorderBrush="Black"
+                                           BorderThickness="1" />
+                                </Track.Thumb>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Command="Slider.IncreaseLarge"
+                                                  Focusable="False"
+                                                  Opacity="0"
+                                                  Background="Transparent"
+                                                  BorderThickness="0" />
+                                </Track.IncreaseRepeatButton>
+                            </Track>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
     <Border Margin="12"
             Padding="12"
             Background="{DynamicResource Brush.PanelBackground}"
@@ -20,65 +57,72 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
+        <!-- Color Preview -->
         <Border Grid.Row="0" Height="54" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="4" Margin="0,0,0,12">
             <Rectangle x:Name="PreviewRect" Fill="White" />
         </Border>
 
-        <Grid Grid.Row="1" Margin="0,0,0,8">
+        <!-- SV Picker (Saturation-Value square) -->
+        <Border Grid.Row="1" Height="220" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="4" Margin="0,0,0,8">
+            <Canvas x:Name="SvPickerCanvas" Background="White" MouseDown="OnSVPickerMouseDown" MouseMove="OnSVPickerMouseMove" MouseUp="OnSVPickerMouseUp" ToolTip="Click or drag to pick a color" />
+        </Border>
+
+        <!-- Hue Slider with Rainbow Gradient -->
+        <Grid Grid.Row="2" Margin="0,0,0,12">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="26" />
+                <ColumnDefinition Width="30" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="H" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextMuted}" />
+            <Grid Grid.Column="1">
+                <!-- Rainbow gradient background -->
+                <Border CornerRadius="2" Margin="0,5,0,5">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0.5" EndPoint="1,0.5">
+                            <GradientStop Color="#FF0000" Offset="0.0" />
+                            <GradientStop Color="#FFFF00" Offset="0.166" />
+                            <GradientStop Color="#00FF00" Offset="0.333" />
+                            <GradientStop Color="#00FFFF" Offset="0.5" />
+                            <GradientStop Color="#0000FF" Offset="0.666" />
+                            <GradientStop Color="#FF00FF" Offset="0.833" />
+                            <GradientStop Color="#FF0000" Offset="1.0" />
+                        </LinearGradientBrush>
+                    </Border.Background>
+                </Border>
+                <!-- Slider on top (transparent track) -->
+                <Slider x:Name="HueSlider" 
+                        Minimum="0" 
+                        Maximum="360" 
+                        Value="0" 
+                        ValueChanged="OnHueChanged"
+                        Background="Transparent"
+                        Style="{StaticResource HueThumbOnlySliderStyle}" />
+            </Grid>
+        </Grid>
+
+        <!-- Alpha Slider -->
+        <Grid Grid.Row="3" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="30" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="48" />
             </Grid.ColumnDefinitions>
             <TextBlock Grid.Column="0" Text="A" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextMuted}" />
-            <Slider x:Name="AlphaSlider" Grid.Column="1" Minimum="0" Maximum="255" ValueChanged="OnChannelChanged" />
+            <Slider x:Name="AlphaSlider" Grid.Column="1" Minimum="0" Maximum="255" ValueChanged="OnAlphaChanged" />
             <TextBlock x:Name="AlphaValueText" Grid.Column="2" Text="255" VerticalAlignment="Center" HorizontalAlignment="Right" Foreground="{DynamicResource Brush.TextPrimary}" />
         </Grid>
 
-        <Grid Grid.Row="2" Margin="0,0,0,8">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="26" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="48" />
-            </Grid.ColumnDefinitions>
-            <TextBlock Grid.Column="0" Text="R" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextMuted}" />
-            <Slider x:Name="RedSlider" Grid.Column="1" Minimum="0" Maximum="255" ValueChanged="OnChannelChanged" />
-            <TextBlock x:Name="RedValueText" Grid.Column="2" Text="255" VerticalAlignment="Center" HorizontalAlignment="Right" Foreground="{DynamicResource Brush.TextPrimary}" />
-        </Grid>
-
-        <Grid Grid.Row="3" Margin="0,0,0,8">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="26" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="48" />
-            </Grid.ColumnDefinitions>
-            <TextBlock Grid.Column="0" Text="G" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextMuted}" />
-            <Slider x:Name="GreenSlider" Grid.Column="1" Minimum="0" Maximum="255" ValueChanged="OnChannelChanged" />
-            <TextBlock x:Name="GreenValueText" Grid.Column="2" Text="255" VerticalAlignment="Center" HorizontalAlignment="Right" Foreground="{DynamicResource Brush.TextPrimary}" />
-        </Grid>
-
+        <!-- Hex Input -->
         <Grid Grid.Row="4" Margin="0,0,0,12">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="26" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="48" />
-            </Grid.ColumnDefinitions>
-            <TextBlock Grid.Column="0" Text="B" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextMuted}" />
-            <Slider x:Name="BlueSlider" Grid.Column="1" Minimum="0" Maximum="255" ValueChanged="OnChannelChanged" />
-            <TextBlock x:Name="BlueValueText" Grid.Column="2" Text="255" VerticalAlignment="Center" HorizontalAlignment="Right" Foreground="{DynamicResource Brush.TextPrimary}" />
-        </Grid>
-
-        <Grid Grid.Row="5" Margin="0,0,0,12" VerticalAlignment="Top">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
             <TextBlock Grid.Column="0"
-                       Text="RGB"
+                       Text="Hex"
                        VerticalAlignment="Center"
                        Margin="0,0,10,0"
                        FontWeight="SemiBold"
@@ -86,16 +130,16 @@
             <TextBox Grid.Column="1"
                      x:Name="HexInput"
                      Text="#FFFFFF"
-                     VerticalAlignment="Top"
+                     VerticalAlignment="Center"
                      FontFamily="Consolas"
                      FontSize="13"
-                     ToolTip="Paste RGB as #RRGGBB (alpha stays on A slider)"
+                     ToolTip="Enter hex color as #RRGGBB"
                      TextChanged="OnHexInputChanged"
                      LostFocus="OnHexInputLostFocus"
                      KeyDown="OnHexInputKeyDown" />
         </Grid>
 
-        <StackPanel Grid.Row="6" Orientation="Horizontal" HorizontalAlignment="Right">
+        <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right">
             <Button Content="OK" Width="88" Margin="0,0,8,0" IsDefault="True" Click="OnOkClick" />
             <Button Content="Cancel" Width="88" IsCancel="True" Style="{DynamicResource SecondaryButtonStyle}" />
         </StackPanel>
