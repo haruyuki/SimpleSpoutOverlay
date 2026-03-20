@@ -91,7 +91,7 @@ public partial class MainWindow : Window
         }
 
         ListBoxItem? listBoxItem = FindAncestor<ListBoxItem>(e.OriginalSource as DependencyObject);
-        if (listBoxItem?.DataContext is not TextLayer draggedLayer)
+        if (listBoxItem?.DataContext is not LayerBase draggedLayer)
         {
             return;
         }
@@ -165,7 +165,7 @@ public partial class MainWindow : Window
 
     private void OnLayerListDragOver(object sender, DragEventArgs e)
     {
-        if (!e.Data.GetDataPresent(typeof(TextLayer)) || sender is not ListBox listBox)
+        if (!e.Data.GetDataPresent(typeof(LayerBase)) || sender is not ListBox listBox)
         {
             ClearInsertionAdorner();
             e.Effects = DragDropEffects.None;
@@ -206,7 +206,7 @@ public partial class MainWindow : Window
 
     private void OnLayerListDrop(object sender, DragEventArgs e)
     {
-        if (sender is not ListBox || DataContext is not MainWindowViewModel viewModel || e.Data.GetData(typeof(TextLayer)) is not TextLayer draggedLayer)
+        if (sender is not ListBox || DataContext is not MainWindowViewModel viewModel || e.Data.GetData(typeof(LayerBase)) is not LayerBase draggedLayer)
         {
             ClearInsertionAdorner();
             return;
@@ -222,7 +222,7 @@ public partial class MainWindow : Window
             }
         }
 
-        TextLayer? targetLayer = _dropTargetItem?.DataContext as TextLayer;
+        LayerBase? targetLayer = _dropTargetItem?.DataContext as LayerBase;
         viewModel.ReorderLayer(draggedLayer, targetLayer, _insertAfterTarget);
         ClearInsertionAdorner();
     }

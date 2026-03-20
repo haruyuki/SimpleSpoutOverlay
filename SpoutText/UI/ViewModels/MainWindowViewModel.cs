@@ -20,7 +20,7 @@ namespace SpoutText.UI.ViewModels
         private readonly LayerManager _layerManager;
         private TextLayerRenderer? _renderer;
         private RenderTargetBitmap? _previewBitmap;
-        private TextLayer? _selectedLayer;
+        private LayerBase? _selectedLayer;
         private bool _isRenderingPreview;
         private SpoutOutputManager? _spoutManager;
         private bool _spoutEnabled;
@@ -47,8 +47,7 @@ namespace SpoutText.UI.ViewModels
         private const double MinOutlineThickness = 0.5;
         private const double MaxOutlineThickness = 20;
 
-        // Selected layer properties
-        private string _selectedText = "";
+        private string _selectedText = string.Empty;
         private string _selectedFontFamily = "Arial";
         private double _selectedFontSize = 48;
         private Color _selectedFillColor = Colors.White;
@@ -59,12 +58,17 @@ namespace SpoutText.UI.ViewModels
         private bool _selectedOutlineEnabled;
         private Color _selectedOutlineColor = Colors.Black;
         private double _selectedOutlineThickness = 2;
+        private string _selectedImagePath = string.Empty;
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
         // Commands
         [UsedImplicitly]
-        public RelayCommand AddLayerCommand {get; }
+        public RelayCommand AddLayerCommand { get; }
+        [UsedImplicitly]
+        public RelayCommand AddImageLayerCommand { get; }
+        [UsedImplicitly]
+        public RelayCommand ReplaceImageCommand { get; }
         [UsedImplicitly]
         public RelayCommand DeleteLayerCommand { get; }
         [UsedImplicitly]
@@ -88,7 +92,9 @@ namespace SpoutText.UI.ViewModels
             _layerManager.LayersChanged += OnLayersChanged;
             _layerManager.SelectionChanged += OnSelectionChanged;
 
-            AddLayerCommand = new RelayCommand(_ => AddLayer());
+            AddLayerCommand = new RelayCommand(_ => AddTextLayer());
+            AddImageLayerCommand = new RelayCommand(_ => ExecuteAddImageLayer());
+            ReplaceImageCommand = new RelayCommand(_ => ExecuteReplaceSelectedImage(), _ => IsImageLayerSelected);
             DeleteLayerCommand = new RelayCommand(_ => DeleteLayer(), _ => SelectedLayer != null);
             MoveLayerUpCommand = new RelayCommand(_ => MoveLayerUp(), _ => CanMoveLayerUp());
             MoveLayerDownCommand = new RelayCommand(_ => MoveLayerDown(), _ => CanMoveLayerDown());
@@ -134,10 +140,10 @@ namespace SpoutText.UI.ViewModels
                 _spoutManager = null;
             }
         }
-    
+
         [UsedImplicitly]
-        public ObservableCollection<TextLayer> Layers => _layerManager.Layers;
-        
+        public ObservableCollection<LayerBase> Layers => _layerManager.Layers;
+
         [UsedImplicitly]
         public bool SpoutEnabled
         {
@@ -185,9 +191,9 @@ namespace SpoutText.UI.ViewModels
                 OnPropertyChanged();
             }
         }
-        
+
         [UsedImplicitly]
-        public TextLayer? SelectedLayer
+        public LayerBase? SelectedLayer
         {
             get => _selectedLayer;
             set
@@ -198,10 +204,20 @@ namespace SpoutText.UI.ViewModels
                 {
                     _layerManager.SelectLayer(value);
                 }
+
                 UpdateSelectedLayerProperties();
                 OnPropertyChanged();
+                OnPropertyChanged(nameof(IsTextLayerSelected));
+                OnPropertyChanged(nameof(IsImageLayerSelected));
+                CommandManager.InvalidateRequerySuggested();
             }
         }
+
+        [UsedImplicitly]
+        public bool IsTextLayerSelected => _selectedLayer is TextLayer;
+
+        [UsedImplicitly]
+        public bool IsImageLayerSelected => _selectedLayer is ImageLayer;
 
         #region Selected Layer Properties
 
@@ -210,10 +226,10 @@ namespace SpoutText.UI.ViewModels
             get => _selectedText;
             set
             {
-                if (_selectedText == value || _selectedLayer == null) return;
+                if (_selectedText == value || _selectedLayer is not TextLayer textLayer) return;
                 PushUndoSnapshot();
                 _selectedText = value;
-                _selectedLayer.Text = value;
+                textLayer.Text = value;
                 OnPropertyChanged();
                 RefreshPreview();
             }
@@ -224,10 +240,10 @@ namespace SpoutText.UI.ViewModels
             get => _selectedFontFamily;
             set
             {
-                if (_selectedFontFamily == value || _selectedLayer == null) return;
+                if (_selectedFontFamily == value || _selectedLayer is not TextLayer textLayer) return;
                 PushUndoSnapshot();
                 _selectedFontFamily = value;
-                _selectedLayer.FontFamily = value;
+                textLayer.FontFamily = value;
                 OnPropertyChanged();
                 RefreshPreview();
             }
@@ -239,10 +255,10 @@ namespace SpoutText.UI.ViewModels
             set
             {
                 value = Math.Clamp(value, MinFontSize, MaxFontSize);
-                if (!(Math.Abs(_selectedFontSize - value) > 0.01) || _selectedLayer == null) return;
+                if (!(Math.Abs(_selectedFontSize - value) > 0.01) || _selectedLayer is not TextLayer textLayer) return;
                 RecordPropertyUndo();
                 _selectedFontSize = value;
-                _selectedLayer.FontSize = value;
+                textLayer.FontSize = value;
                 OnPropertyChanged();
                 RefreshPreview();
             }
@@ -253,10 +269,24 @@ namespace SpoutText.UI.ViewModels
             get => _selectedFillColor;
             set
             {
-                if (_selectedFillColor == value || _selectedLayer == null) return;
+                if (_selectedFillColor == value || _selectedLayer is not TextLayer textLayer) return;
                 PushUndoSnapshot();
                 _selectedFillColor = value;
-                _selectedLayer.FillColor = value;
+                textLayer.FillColor = value;
+                OnPropertyChanged();
+                RefreshPreview();
+            }
+        }
+
+        public string SelectedImagePath
+        {
+            get => _selectedImagePath;
+            set
+            {
+                if (_selectedImagePath == value || _selectedLayer is not ImageLayer imageLayer) return;
+                PushUndoSnapshot();
+                _selectedImagePath = value;
+                imageLayer.ImagePath = value;
                 OnPropertyChanged();
                 RefreshPreview();
             }
@@ -327,10 +357,10 @@ namespace SpoutText.UI.ViewModels
             get => _selectedOutlineEnabled;
             set
             {
-                if (_selectedOutlineEnabled == value || _selectedLayer == null) return;
+                if (_selectedOutlineEnabled == value || _selectedLayer is not TextLayer textLayer) return;
                 PushUndoSnapshot();
                 _selectedOutlineEnabled = value;
-                _selectedLayer.OutlineEnabled = value;
+                textLayer.OutlineEnabled = value;
                 OnPropertyChanged();
                 RefreshPreview();
             }
@@ -341,10 +371,10 @@ namespace SpoutText.UI.ViewModels
             get => _selectedOutlineColor;
             set
             {
-                if (_selectedOutlineColor == value || _selectedLayer == null) return;
+                if (_selectedOutlineColor == value || _selectedLayer is not TextLayer textLayer) return;
                 PushUndoSnapshot();
                 _selectedOutlineColor = value;
-                _selectedLayer.OutlineColor = value;
+                textLayer.OutlineColor = value;
                 OnPropertyChanged();
                 RefreshPreview();
             }
@@ -356,10 +386,10 @@ namespace SpoutText.UI.ViewModels
             set
             {
                 value = Math.Clamp(value, MinOutlineThickness, MaxOutlineThickness);
-                if (!(Math.Abs(_selectedOutlineThickness - value) > 0.01) || _selectedLayer == null) return;
+                if (!(Math.Abs(_selectedOutlineThickness - value) > 0.01) || _selectedLayer is not TextLayer textLayer) return;
                 RecordPropertyUndo();
                 _selectedOutlineThickness = value;
-                _selectedLayer.OutlineThickness = value;
+                textLayer.OutlineThickness = value;
                 OnPropertyChanged();
                 RefreshPreview();
             }
@@ -377,7 +407,7 @@ namespace SpoutText.UI.ViewModels
                 OnPropertyChanged();
             }
         }
-        
+
         [UsedImplicitly]
         public bool CanUndo => _undoStack.Count > 0;
 
@@ -394,12 +424,56 @@ namespace SpoutText.UI.ViewModels
             }
         }
 
-        private void AddLayer()
+        private void AddTextLayer()
         {
             PushUndoSnapshot();
-            TextLayer layer = new($"Text {_layerManager.Layers.Count + 1}");
+            TextLayer layer = new($"Text {_layerManager.Layers.OfType<TextLayer>().Count() + 1}");
             _layerManager.AddLayer(layer);
             SelectedLayer = layer;
+        }
+
+        private void ExecuteAddImageLayer()
+        {
+            string? path = SelectImagePath();
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                return;
+            }
+
+            PushUndoSnapshot();
+            ImageLayer layer = new(path);
+            _layerManager.AddLayer(layer);
+            SelectedLayer = layer;
+            ShowToast($"Image added: {Path.GetFileName(path)}");
+        }
+
+        private void ExecuteReplaceSelectedImage()
+        {
+            if (_selectedLayer is not ImageLayer)
+            {
+                return;
+            }
+
+            string? path = SelectImagePath();
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                return;
+            }
+
+            SelectedImagePath = path;
+            ShowToast($"Image updated: {Path.GetFileName(path)}");
+        }
+
+        private static string? SelectImagePath()
+        {
+            OpenFileDialog dialog = new()
+            {
+                Filter = "Images|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff;*.webp|All Files (*.*)|*.*",
+                CheckFileExists = true,
+                Multiselect = false
+            };
+
+            return dialog.ShowDialog() == true ? dialog.FileName : null;
         }
 
         private void DeleteLayer()
@@ -434,7 +508,7 @@ namespace SpoutText.UI.ViewModels
             _layerManager.MoveLayerDown(SelectedLayer);
         }
 
-        public void ReorderLayer(TextLayer draggedLayer, TextLayer? targetLayer, bool insertAfter)
+        public void ReorderLayer(LayerBase draggedLayer, LayerBase? targetLayer, bool insertAfter)
         {
             int fromIndex = _layerManager.Layers.IndexOf(draggedLayer);
             if (fromIndex < 0)
@@ -478,7 +552,7 @@ namespace SpoutText.UI.ViewModels
         {
             if (_selectedLayer == null)
             {
-                _selectedText = "";
+                _selectedText = string.Empty;
                 _selectedFontFamily = "Arial";
                 _selectedFontSize = 48;
                 _selectedFillColor = Colors.White;
@@ -489,20 +563,37 @@ namespace SpoutText.UI.ViewModels
                 _selectedOutlineEnabled = false;
                 _selectedOutlineColor = Colors.Black;
                 _selectedOutlineThickness = 2;
+                _selectedImagePath = string.Empty;
             }
             else
             {
-                _selectedText = _selectedLayer.Text;
-                _selectedFontFamily = _selectedLayer.FontFamily;
-                _selectedFontSize = _selectedLayer.FontSize;
-                _selectedFillColor = _selectedLayer.FillColor;
                 _selectedPositionX = _selectedLayer.PositionX;
                 _selectedPositionY = _selectedLayer.PositionY;
                 _selectedScaleX = _selectedLayer.ScaleX;
                 _selectedScaleY = _selectedLayer.ScaleY;
-                _selectedOutlineEnabled = _selectedLayer.OutlineEnabled;
-                _selectedOutlineColor = _selectedLayer.OutlineColor;
-                _selectedOutlineThickness = _selectedLayer.OutlineThickness;
+
+                if (_selectedLayer is TextLayer textLayer)
+                {
+                    _selectedText = textLayer.Text;
+                    _selectedFontFamily = textLayer.FontFamily;
+                    _selectedFontSize = textLayer.FontSize;
+                    _selectedFillColor = textLayer.FillColor;
+                    _selectedOutlineEnabled = textLayer.OutlineEnabled;
+                    _selectedOutlineColor = textLayer.OutlineColor;
+                    _selectedOutlineThickness = textLayer.OutlineThickness;
+                    _selectedImagePath = string.Empty;
+                }
+                else if (_selectedLayer is ImageLayer imageLayer)
+                {
+                    _selectedText = string.Empty;
+                    _selectedFontFamily = "Arial";
+                    _selectedFontSize = 48;
+                    _selectedFillColor = Colors.White;
+                    _selectedOutlineEnabled = false;
+                    _selectedOutlineColor = Colors.Black;
+                    _selectedOutlineThickness = 2;
+                    _selectedImagePath = imageLayer.ImagePath;
+                }
             }
 
             OnPropertyChanged(nameof(SelectedText));
@@ -516,6 +607,9 @@ namespace SpoutText.UI.ViewModels
             OnPropertyChanged(nameof(SelectedOutlineEnabled));
             OnPropertyChanged(nameof(SelectedOutlineColor));
             OnPropertyChanged(nameof(SelectedOutlineThickness));
+            OnPropertyChanged(nameof(SelectedImagePath));
+            OnPropertyChanged(nameof(IsTextLayerSelected));
+            OnPropertyChanged(nameof(IsImageLayerSelected));
         }
 
         private void RefreshPreview()
@@ -651,8 +745,9 @@ namespace SpoutText.UI.ViewModels
                 Version = source.Version,
                 SelectedLayerIndex = source.SelectedLayerIndex,
                 Layers = source.Layers
-                    .Select(layer => new TextLayerState
+                    .Select(layer => new LayerState
                     {
+                        Type = layer.Type,
                         Text = layer.Text,
                         FontFamily = layer.FontFamily,
                         FontSize = layer.FontSize,
@@ -663,7 +758,8 @@ namespace SpoutText.UI.ViewModels
                         ScaleY = layer.ScaleY,
                         OutlineEnabled = layer.OutlineEnabled,
                         OutlineColor = layer.OutlineColor,
-                        OutlineThickness = layer.OutlineThickness
+                        OutlineThickness = layer.OutlineThickness,
+                        ImagePath = layer.ImagePath
                     })
                     .ToList()
             };
@@ -678,10 +774,11 @@ namespace SpoutText.UI.ViewModels
 
             for (int index = 0; index < left.Layers.Count; index++)
             {
-                TextLayerState a = left.Layers[index];
-                TextLayerState b = right.Layers[index];
+                LayerState a = left.Layers[index];
+                LayerState b = right.Layers[index];
 
-                if (a.Text != b.Text ||
+                if (a.Type != b.Type ||
+                    a.Text != b.Text ||
                     a.FontFamily != b.FontFamily ||
                     Math.Abs(a.FontSize - b.FontSize) > 0.001 ||
                     a.FillColor != b.FillColor ||
@@ -691,7 +788,8 @@ namespace SpoutText.UI.ViewModels
                     Math.Abs(a.ScaleY - b.ScaleY) > 0.001 ||
                     a.OutlineEnabled != b.OutlineEnabled ||
                     a.OutlineColor != b.OutlineColor ||
-                    Math.Abs(a.OutlineThickness - b.OutlineThickness) > 0.001)
+                    Math.Abs(a.OutlineThickness - b.OutlineThickness) > 0.001 ||
+                    a.ImagePath != b.ImagePath)
                 {
                     return false;
                 }
@@ -861,7 +959,7 @@ namespace SpoutText.UI.ViewModels
             {
                 Version = SessionState.CurrentVersion,
                 SelectedLayerIndex = selectedIndex,
-                Layers = _layerManager.Layers.Select(ToTextLayerState).ToList()
+                Layers = _layerManager.Layers.Select(ToLayerState).ToList()
             };
         }
 
@@ -873,9 +971,9 @@ namespace SpoutText.UI.ViewModels
             {
                 _layerManager.Layers.Clear();
 
-                foreach (TextLayerState layerState in state.Layers)
+                foreach (LayerState layerState in state.Layers)
                 {
-                    _layerManager.Layers.Add(FromTextLayerState(layerState));
+                    _layerManager.Layers.Add(FromLayerState(layerState));
                 }
 
                 if (_layerManager.Layers.Count == 0)
@@ -907,26 +1005,51 @@ namespace SpoutText.UI.ViewModels
             RefreshPreview();
         }
 
-        private static TextLayerState ToTextLayerState(TextLayer layer)
+        private static LayerState ToLayerState(LayerBase layer)
         {
-            return new TextLayerState
+            return layer switch
             {
-                Text = layer.Text,
-                FontFamily = layer.FontFamily,
-                FontSize = layer.FontSize,
-                FillColor = ToArgbHex(layer.FillColor),
-                PositionX = layer.PositionX,
-                PositionY = layer.PositionY,
-                ScaleX = layer.ScaleX,
-                ScaleY = layer.ScaleY,
-                OutlineEnabled = layer.OutlineEnabled,
-                OutlineColor = ToArgbHex(layer.OutlineColor),
-                OutlineThickness = layer.OutlineThickness
+                TextLayer textLayer => new LayerState
+                {
+                    Type = "Text",
+                    Text = textLayer.Text,
+                    FontFamily = textLayer.FontFamily,
+                    FontSize = textLayer.FontSize,
+                    FillColor = ToArgbHex(textLayer.FillColor),
+                    PositionX = textLayer.PositionX,
+                    PositionY = textLayer.PositionY,
+                    ScaleX = textLayer.ScaleX,
+                    ScaleY = textLayer.ScaleY,
+                    OutlineEnabled = textLayer.OutlineEnabled,
+                    OutlineColor = ToArgbHex(textLayer.OutlineColor),
+                    OutlineThickness = textLayer.OutlineThickness
+                },
+                ImageLayer imageLayer => new LayerState
+                {
+                    Type = "Image",
+                    PositionX = imageLayer.PositionX,
+                    PositionY = imageLayer.PositionY,
+                    ScaleX = imageLayer.ScaleX,
+                    ScaleY = imageLayer.ScaleY,
+                    ImagePath = imageLayer.ImagePath
+                },
+                _ => throw new InvalidOperationException("Unsupported layer type.")
             };
         }
 
-        private static TextLayer FromTextLayerState(TextLayerState state)
+        private static LayerBase FromLayerState(LayerState state)
         {
+            if (string.Equals(state.Type, "Image", StringComparison.OrdinalIgnoreCase))
+            {
+                return new ImageLayer(state.ImagePath)
+                {
+                    PositionX = state.PositionX,
+                    PositionY = state.PositionY,
+                    ScaleX = state.ScaleX,
+                    ScaleY = state.ScaleY
+                };
+            }
+
             return new TextLayer(state.Text, state.FontFamily, state.FontSize)
             {
                 FillColor = ParseColor(state.FillColor, Colors.White),
@@ -1016,5 +1139,4 @@ namespace SpoutText.UI.ViewModels
         }
     }
 }
-
 

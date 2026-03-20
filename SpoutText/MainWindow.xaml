@@ -102,7 +102,7 @@
                          MinHeight="260">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
-                            <TextBlock Text="{Binding Text}" Padding="8,6" TextTrimming="CharacterEllipsis" />
+                            <TextBlock Text="{Binding DisplayName}" Padding="8,6" TextTrimming="CharacterEllipsis" />
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                 </ListBox>
@@ -113,11 +113,16 @@
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="8" />
                             <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="8" />
+                            <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
                         <Button Grid.Column="0"
                                 Command="{Binding AddLayerCommand}"
-                                Content="Add Layer" />
+                                Content="Add Text" />
                         <Button Grid.Column="2"
+                                Command="{Binding AddImageLayerCommand}"
+                                Content="Add Image" />
+                        <Button Grid.Column="4"
                                 Command="{Binding DeleteLayerCommand}"
                                 Content="Delete"
                                 Style="{DynamicResource DangerButtonStyle}"
@@ -177,53 +182,83 @@
                               Visibility="{Binding SelectedLayer, Converter={StaticResource SelectedLayerToVisibilityConverter}}">
                     <StackPanel Margin="12">
                         <StackPanel Margin="0,0,0,14">
-                            <TextBlock Text="Text" Style="{DynamicResource FieldLabelStyle}" />
-                            <TextBox Text="{Binding SelectedText, UpdateSourceTrigger=PropertyChanged}" TextWrapping="Wrap" Height="76" />
-                        </StackPanel>
+                            <StackPanel.Style>
+                                <Style TargetType="StackPanel">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsTextLayerSelected}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </StackPanel.Style>
 
-                        <StackPanel Margin="0,0,0,14">
-                            <TextBlock Text="Font Family" Style="{DynamicResource FieldLabelStyle}" />
-                            <ComboBox ItemsSource="{Binding AvailableFonts}"
-                                      SelectedItem="{Binding SelectedFontFamily, UpdateSourceTrigger=PropertyChanged}" />
-                        </StackPanel>
-
-                        <StackPanel Margin="0,0,0,14">
-                            <TextBlock Text="Font Size" Style="{DynamicResource FieldLabelStyle}" />
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="56" />
-                                </Grid.ColumnDefinitions>
-                                <Slider Grid.Column="0"
-                                        Value="{Binding SelectedFontSize, UpdateSourceTrigger=PropertyChanged}"
-                                        Minimum="8"
-                                        Maximum="200"
-                                        Thumb.DragStarted="OnPropertySliderDragStarted"
-                                        Thumb.DragCompleted="OnPropertySliderDragCompleted"
-                                        Margin="0,0,8,0" />
-                                <TextBox Grid.Column="1"
-                                         Style="{DynamicResource NumericValueEditorStyle}"
-                                         Text="{Binding SelectedFontSize, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat=F0}"
-                                         ToolTip="Click to type a value"
-                                         GotKeyboardFocus="OnNumericEditorGotKeyboardFocus"
-                                         KeyDown="OnNumericEditorKeyDown" />
-                            </Grid>
-                        </StackPanel>
-
-                        <StackPanel Margin="0,0,0,14">
-                            <TextBlock Text="Fill Color" Style="{DynamicResource FieldLabelStyle}" />
-                            <StackPanel Orientation="Horizontal">
-                                <Rectangle Width="42"
-                                           Height="42"
-                                           Fill="{Binding SelectedFillColor, Converter={StaticResource ColorToBrushConverter}}"
-                                           Stroke="{DynamicResource Brush.Border}"
-                                           StrokeThickness="1"
-                                           Margin="0,0,10,0" />
-                                <Button Content="Choose Color"
-                                        Width="130"
-                                        VerticalAlignment="Center"
-                                        Click="OnChooseFillColor" />
+                            <StackPanel Margin="0,0,0,14">
+                                <TextBlock Text="Text" Style="{DynamicResource FieldLabelStyle}" />
+                                <TextBox Text="{Binding SelectedText, UpdateSourceTrigger=PropertyChanged}" TextWrapping="Wrap" Height="76" />
                             </StackPanel>
+
+                            <StackPanel Margin="0,0,0,14">
+                                <TextBlock Text="Font Family" Style="{DynamicResource FieldLabelStyle}" />
+                                <ComboBox ItemsSource="{Binding AvailableFonts}"
+                                          SelectedItem="{Binding SelectedFontFamily, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+
+                            <StackPanel Margin="0,0,0,14">
+                                <TextBlock Text="Font Size" Style="{DynamicResource FieldLabelStyle}" />
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="56" />
+                                    </Grid.ColumnDefinitions>
+                                    <Slider Grid.Column="0"
+                                            Value="{Binding SelectedFontSize, UpdateSourceTrigger=PropertyChanged}"
+                                            Minimum="8"
+                                            Maximum="200"
+                                            Thumb.DragStarted="OnPropertySliderDragStarted"
+                                            Thumb.DragCompleted="OnPropertySliderDragCompleted"
+                                            Margin="0,0,8,0" />
+                                    <TextBox Grid.Column="1"
+                                             Style="{DynamicResource NumericValueEditorStyle}"
+                                             Text="{Binding SelectedFontSize, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat=F0}"
+                                             ToolTip="Click to type a value"
+                                             GotKeyboardFocus="OnNumericEditorGotKeyboardFocus"
+                                             KeyDown="OnNumericEditorKeyDown" />
+                                </Grid>
+                            </StackPanel>
+
+                            <StackPanel Margin="0,0,0,14">
+                                <TextBlock Text="Fill Color" Style="{DynamicResource FieldLabelStyle}" />
+                                <StackPanel Orientation="Horizontal">
+                                    <Rectangle Width="42"
+                                               Height="42"
+                                               Fill="{Binding SelectedFillColor, Converter={StaticResource ColorToBrushConverter}}"
+                                               Stroke="{DynamicResource Brush.Border}"
+                                               StrokeThickness="1"
+                                               Margin="0,0,10,0" />
+                                    <Button Content="Choose Color"
+                                            Width="130"
+                                            VerticalAlignment="Center"
+                                            Click="OnChooseFillColor" />
+                                </StackPanel>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <StackPanel Margin="0,0,0,14">
+                            <StackPanel.Style>
+                                <Style TargetType="StackPanel">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsImageLayerSelected}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </StackPanel.Style>
+
+                            <TextBlock Text="Image File" Style="{DynamicResource FieldLabelStyle}" />
+                            <TextBox Text="{Binding SelectedImagePath}" IsReadOnly="True" TextWrapping="Wrap" Margin="0,0,0,8" />
+                            <Button Command="{Binding ReplaceImageCommand}" Content="Choose Image" Width="130" />
                         </StackPanel>
 
                         <StackPanel Margin="0,0,0,14">
@@ -318,47 +353,60 @@
                             </Grid>
                         </StackPanel>
 
-                        <CheckBox IsChecked="{Binding SelectedOutlineEnabled, UpdateSourceTrigger=PropertyChanged}"
-                                  Content="Enable Outline"
-                                  Margin="0,0,0,14" />
+                        <StackPanel>
+                            <StackPanel.Style>
+                                <Style TargetType="StackPanel">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsTextLayerSelected}" Value="True">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </StackPanel.Style>
 
-                        <StackPanel Margin="0,0,0,14" Opacity="{Binding SelectedOutlineEnabled}">
-                            <TextBlock Text="Outline Color" Style="{DynamicResource FieldLabelStyle}" />
-                            <StackPanel Orientation="Horizontal">
-                                <Rectangle Width="42"
-                                           Height="42"
-                                           Fill="{Binding SelectedOutlineColor, Converter={StaticResource ColorToBrushConverter}}"
-                                           Stroke="{DynamicResource Brush.Border}"
-                                           StrokeThickness="1"
-                                           Margin="0,0,10,0" />
-                                <Button Content="Choose Color"
-                                        Width="130"
-                                        VerticalAlignment="Center"
-                                        Click="OnChooseOutlineColor" />
+                            <CheckBox IsChecked="{Binding SelectedOutlineEnabled, UpdateSourceTrigger=PropertyChanged}"
+                                      Content="Enable Outline"
+                                      Margin="0,0,0,14" />
+
+                            <StackPanel Margin="0,0,0,14" Opacity="{Binding SelectedOutlineEnabled}">
+                                <TextBlock Text="Outline Color" Style="{DynamicResource FieldLabelStyle}" />
+                                <StackPanel Orientation="Horizontal">
+                                    <Rectangle Width="42"
+                                               Height="42"
+                                               Fill="{Binding SelectedOutlineColor, Converter={StaticResource ColorToBrushConverter}}"
+                                               Stroke="{DynamicResource Brush.Border}"
+                                               StrokeThickness="1"
+                                               Margin="0,0,10,0" />
+                                    <Button Content="Choose Color"
+                                            Width="130"
+                                            VerticalAlignment="Center"
+                                            Click="OnChooseOutlineColor" />
+                                </StackPanel>
                             </StackPanel>
-                        </StackPanel>
 
-                        <StackPanel Margin="0,0,0,4">
-                            <TextBlock Text="Outline Thickness" Style="{DynamicResource FieldLabelStyle}" />
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="56" />
-                                </Grid.ColumnDefinitions>
-                                <Slider Grid.Column="0"
-                                        Value="{Binding SelectedOutlineThickness, UpdateSourceTrigger=PropertyChanged}"
-                                        Minimum="0.5"
-                                        Maximum="20"
-                                        Thumb.DragStarted="OnPropertySliderDragStarted"
-                                        Thumb.DragCompleted="OnPropertySliderDragCompleted"
-                                        Margin="0,0,8,0" />
-                                <TextBox Grid.Column="1"
-                                         Style="{DynamicResource NumericValueEditorStyle}"
-                                         Text="{Binding SelectedOutlineThickness, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat=F1}"
-                                         ToolTip="Click to type a value"
-                                         GotKeyboardFocus="OnNumericEditorGotKeyboardFocus"
-                                         KeyDown="OnNumericEditorKeyDown" />
-                            </Grid>
+                            <StackPanel Margin="0,0,0,4">
+                                <TextBlock Text="Outline Thickness" Style="{DynamicResource FieldLabelStyle}" />
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="56" />
+                                    </Grid.ColumnDefinitions>
+                                    <Slider Grid.Column="0"
+                                            Value="{Binding SelectedOutlineThickness, UpdateSourceTrigger=PropertyChanged}"
+                                            Minimum="0.5"
+                                            Maximum="20"
+                                            Thumb.DragStarted="OnPropertySliderDragStarted"
+                                            Thumb.DragCompleted="OnPropertySliderDragCompleted"
+                                            Margin="0,0,8,0" />
+                                    <TextBox Grid.Column="1"
+                                             Style="{DynamicResource NumericValueEditorStyle}"
+                                             Text="{Binding SelectedOutlineThickness, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat=F1}"
+                                             ToolTip="Click to type a value"
+                                             GotKeyboardFocus="OnNumericEditorGotKeyboardFocus"
+                                             KeyDown="OnNumericEditorKeyDown" />
+                                </Grid>
+                            </StackPanel>
                         </StackPanel>
                     </StackPanel>
                 </ScrollViewer>

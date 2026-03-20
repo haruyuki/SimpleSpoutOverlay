@@ -2,75 +2,70 @@
 
 namespace SpoutText.Models
 {
-    /// <summary>
-    /// Manages the collection of text layers, including ordering and selection.
-    /// </summary>
+    /// Manages the collection of layers, including ordering and selection.
     public class LayerManager
     {
-        private readonly ObservableCollection<TextLayer> _layers = [];
+        public ObservableCollection<LayerBase> Layers { get; } = [];
 
-        public ObservableCollection<TextLayer> Layers => _layers;
-
-        private TextLayer? SelectedLayer { get; set; }
+        private LayerBase? SelectedLayer { get; set; }
 
         public event Action? LayersChanged;
         public event Action? SelectionChanged;
 
-        public void AddLayer(TextLayer layer)
+        public void AddLayer(LayerBase layer)
         {
-            _layers.Add(layer);
+            Layers.Add(layer);
             SelectedLayer = layer;
             LayersChanged?.Invoke();
         }
 
-        public void RemoveLayer(TextLayer layer)
+        public void RemoveLayer(LayerBase layer)
         {
-            int removedIndex = _layers.IndexOf(layer);
-            _layers.Remove(layer);
+            int removedIndex = Layers.IndexOf(layer);
+            Layers.Remove(layer);
             if (SelectedLayer == layer)
             {
-                if (_layers.Count == 0)
+                if (Layers.Count == 0)
                 {
                     SelectedLayer = null;
                 }
                 else
                 {
-                    int nextIndex = Math.Min(Math.Max(removedIndex, 0), _layers.Count - 1);
-                    SelectedLayer = _layers[nextIndex];
+                    int nextIndex = Math.Min(Math.Max(removedIndex, 0), Layers.Count - 1);
+                    SelectedLayer = Layers[nextIndex];
                 }
             }
             LayersChanged?.Invoke();
         }
 
-        public void SelectLayer(TextLayer layer)
+        public void SelectLayer(LayerBase layer)
         {
             SelectedLayer = layer;
             SelectionChanged?.Invoke();
         }
 
-        public void MoveLayerUp(TextLayer layer)
+        public void MoveLayerUp(LayerBase layer)
         {
-            int index = _layers.IndexOf(layer);
+            int index = Layers.IndexOf(layer);
             if (index <= 0) return;
             MoveLayer(index, index - 1);
         }
 
-        public void MoveLayerDown(TextLayer layer)
+        public void MoveLayerDown(LayerBase layer)
         {
-            int index = _layers.IndexOf(layer);
-            if (index >= _layers.Count - 1) return;
+            int index = Layers.IndexOf(layer);
+            if (index >= Layers.Count - 1) return;
             MoveLayer(index, index + 1);
         }
 
         public void MoveLayer(int fromIndex, int toIndex)
         {
-            if (fromIndex < 0 || fromIndex >= _layers.Count) return;
-            if (toIndex < 0 || toIndex >= _layers.Count) return;
+            if (fromIndex < 0 || fromIndex >= Layers.Count) return;
+            if (toIndex < 0 || toIndex >= Layers.Count) return;
             if (fromIndex == toIndex) return;
 
-            _layers.Move(fromIndex, toIndex);
+            Layers.Move(fromIndex, toIndex);
             LayersChanged?.Invoke();
         }
     }
 }
-

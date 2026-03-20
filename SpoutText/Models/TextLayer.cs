@@ -2,29 +2,24 @@
 
 namespace SpoutText.Models
 {
-    /// <summary>
     /// Represents a single text layer with formatting, color, position, and outline properties.
-    /// </summary>
-    public class TextLayer(string text, string fontFamily = "Arial", double fontSize = 48)
+    public sealed class TextLayer(string text, string fontFamily = "Arial", double fontSize = 48) : LayerBase
     {
-        // Outline properties
-
+        // Text properties
         public string Text { get; set; } = text;
 
+        public override string LayerType => "Text";
+
+        public override string DisplayName => string.IsNullOrWhiteSpace(Text) ? "Text" : Text;
+
+        // Formatting properties
         public string FontFamily { get; set; } = fontFamily;
 
         public double FontSize { get; set; } = fontSize;
 
         public Color FillColor { get; set; } = Colors.White;
 
-        public double PositionX { get; set; } = 10;
-
-        public double PositionY { get; set; } = 10;
-
-        public double ScaleX { get; set; } = 1.0;
-
-        public double ScaleY { get; set; } = 1.0;
-
+        // Outline properties
         public bool OutlineEnabled { get; set; }
 
         public Color OutlineColor { get; set; } = Colors.Black;
@@ -32,4 +27,3 @@ namespace SpoutText.Models
         public double OutlineThickness { get; set; } = 2;
     }
 }
-

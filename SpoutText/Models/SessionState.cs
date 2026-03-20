@@ -1,25 +1,23 @@
 ﻿namespace SpoutText.Models;
 
-/// <summary>
 /// Serializable application state for restoring the previous editing session.
-/// </summary>
 public sealed class SessionState
 {
-    public const int CurrentVersion = 1;
+    public const int CurrentVersion = 2;
 
     public int Version { get; init; } = CurrentVersion;
 
-    public List<TextLayerState> Layers { get; set; } = [];
+    public List<LayerState> Layers { get; init; } = [];
 
     public int SelectedLayerIndex { get; init; } = -1;
 }
 
-/// <summary>
-/// Serializable text layer data used in session files.
-/// </summary>
-public sealed class TextLayerState
+/// Serializable layer data used in session files.
+public sealed class LayerState
 {
-    public string Text { get; set; } = string.Empty;
+    public string Type { get; init; } = "Text";
+
+    public string Text { get; init; } = string.Empty;
 
     public string FontFamily { get; init; } = "Arial";
 
@@ -40,5 +38,6 @@ public sealed class TextLayerState
     public string OutlineColor { get; init; } = "#FF000000";
 
     public double OutlineThickness { get; init; } = 2;
-}
 
+    public string ImagePath { get; init; } = string.Empty;
+}
