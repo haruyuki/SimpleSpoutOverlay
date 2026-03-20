@@ -6,7 +6,7 @@ namespace SpoutText.UI.Converters
 {
     public class ColorToBrushConverter : IValueConverter
     {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             if (value is Color color)
             {
@@ -15,7 +15,7 @@ namespace SpoutText.UI.Converters
             return new SolidColorBrush(Colors.Transparent);
         }
 
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             if (value is SolidColorBrush brush)
             {
@@ -25,35 +25,14 @@ namespace SpoutText.UI.Converters
         }
     }
 
-    public class InvertBoolConverter : IValueConverter
-    {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            if (value is bool boolValue)
-            {
-                return !boolValue;
-            }
-            return true;
-        }
-
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            if (value is bool boolValue)
-            {
-                return !boolValue;
-            }
-            return true;
-        }
-    }
-
     public class SelectedLayerToVisibilityConverter : IValueConverter
     {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             return value != null ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
         }
 
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             return Binding.DoNothing;
         }
@@ -61,14 +40,14 @@ namespace SpoutText.UI.Converters
 
     public class HasValueToBoolConverter : IValueConverter
     {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
-            var hasValue = value != null;
-            var invert = string.Equals(parameter as string, "Invert", StringComparison.OrdinalIgnoreCase);
+            bool hasValue = value != null;
+            bool invert = string.Equals(parameter as string, "Invert", StringComparison.OrdinalIgnoreCase);
             return invert ? !hasValue : hasValue;
         }
 
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             return Binding.DoNothing;
         }

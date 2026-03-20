@@ -1,5 +1,4 @@
 ﻿using System.Windows;
-using System.Windows.Media;
 using SpoutText.UI.Dialogs;
 using SpoutText.UI.ViewModels;
 
@@ -21,7 +20,7 @@ public partial class MainWindow : Window
         if (DataContext is not MainWindowViewModel viewModel)
             return;
 
-        var dialog = new ColorPickerWindow(viewModel.SelectedFillColor)
+        ColorPickerWindow dialog = new ColorPickerWindow(viewModel.SelectedFillColor)
         {
             Owner = this
         };
@@ -37,7 +36,7 @@ public partial class MainWindow : Window
         if (DataContext is not MainWindowViewModel viewModel)
             return;
 
-        var dialog = new ColorPickerWindow(viewModel.SelectedOutlineColor)
+        ColorPickerWindow dialog = new(viewModel.SelectedOutlineColor)
         {
             Owner = this
         };

@@ -5,7 +5,7 @@ using System.Windows.Media;
 
 namespace SpoutText.UI.Dialogs;
 
-public partial class ColorPickerWindow : Window
+public partial class ColorPickerWindow
 {
     private bool _isUpdatingHexInput;
 
@@ -90,7 +90,7 @@ public partial class ColorPickerWindow : Window
 
     private void UpdateHexInputText(byte r, byte g, byte b)
     {
-        var hex = $"#{r:X2}{g:X2}{b:X2}";
+        string hex = $"#{r:X2}{g:X2}{b:X2}";
         if (HexInput.Text == hex)
             return;
 
@@ -108,8 +108,8 @@ public partial class ColorPickerWindow : Window
         if (string.IsNullOrWhiteSpace(input))
             return false;
 
-        var hex = input.Trim();
-        if (hex.StartsWith("#"))
+        string hex = input.Trim();
+        if (hex.StartsWith('#'))
             hex = hex[1..];
 
         if (hex.Length != 6)
@@ -117,9 +117,7 @@ public partial class ColorPickerWindow : Window
 
         if (!byte.TryParse(hex[..2], System.Globalization.NumberStyles.HexNumber, null, out r))
             return false;
-        if (!byte.TryParse(hex.Substring(2, 2), System.Globalization.NumberStyles.HexNumber, null, out g))
-            return false;
-        return byte.TryParse(hex.Substring(4, 2), System.Globalization.NumberStyles.HexNumber, null, out b);
+        return byte.TryParse(hex.AsSpan(2, 2), System.Globalization.NumberStyles.HexNumber, null, out g) && byte.TryParse(hex.AsSpan(4, 2), System.Globalization.NumberStyles.HexNumber, null, out b);
     }
 
     private void OnOkClick(object sender, RoutedEventArgs e)

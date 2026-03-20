@@ -1,21 +1,23 @@
 ﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using JetBrains.Annotations;
 using SpoutText.Models;
 using SpoutText.Rendering;
 
 namespace SpoutText.UI.ViewModels
 {
-    public class MainWindowViewModel : INotifyPropertyChanged
+    public sealed class MainWindowViewModel : INotifyPropertyChanged
     {
-        private LayerManager _layerManager;
+        private readonly LayerManager _layerManager;
         private TextLayerRenderer? _renderer;
         private RenderTargetBitmap? _previewBitmap;
         private TextLayer? _selectedLayer;
-        private bool _isRenderingPreview = false;
+        private bool _isRenderingPreview;
 
         // Selected layer properties
         private string _selectedText = "";
@@ -26,16 +28,20 @@ namespace SpoutText.UI.ViewModels
         private double _selectedPositionY = 10;
         private double _selectedScaleX = 1.0;
         private double _selectedScaleY = 1.0;
-        private bool _selectedOutlineEnabled = false;
+        private bool _selectedOutlineEnabled;
         private Color _selectedOutlineColor = Colors.Black;
         private double _selectedOutlineThickness = 2;
 
         public event PropertyChangedEventHandler? PropertyChanged;
 
         // Commands
-        public RelayCommand AddLayerCommand { get; }
+        [UsedImplicitly]
+        public RelayCommand AddLayerCommand {get; }
+        [UsedImplicitly]
         public RelayCommand DeleteLayerCommand { get; }
+        [UsedImplicitly]
         public RelayCommand MoveLayerUpCommand { get; }
+        [UsedImplicitly]
         public RelayCommand MoveLayerDownCommand { get; }
 
         public MainWindowViewModel()
@@ -65,22 +71,21 @@ namespace SpoutText.UI.ViewModels
         }
 
         public ObservableCollection<TextLayer> Layers => _layerManager.Layers;
-
+        
+        [UsedImplicitly]
         public TextLayer? SelectedLayer
         {
             get => _selectedLayer;
             set
             {
-                if (_selectedLayer != value)
+                if (_selectedLayer == value) return;
+                _selectedLayer = value;
+                if (value != null)
                 {
-                    _selectedLayer = value;
-                    if (value != null)
-                    {
-                        _layerManager.SelectLayer(value);
-                    }
-                    UpdateSelectedLayerProperties();
-                    OnPropertyChanged(nameof(SelectedLayer));
+                    _layerManager.SelectLayer(value);
                 }
+                UpdateSelectedLayerProperties();
+                OnPropertyChanged();
             }
         }
 
@@ -91,13 +96,11 @@ namespace SpoutText.UI.ViewModels
             get => _selectedText;
             set
             {
-                if (_selectedText != value && _selectedLayer != null)
-                {
-                    _selectedText = value;
-                    _selectedLayer.Text = value;
-                    OnPropertyChanged(nameof(SelectedText));
-                    RefreshPreview();
-                }
+                if (_selectedText == value || _selectedLayer == null) return;
+                _selectedText = value;
+                _selectedLayer.Text = value;
+                OnPropertyChanged();
+                RefreshPreview();
             }
         }
 
@@ -106,13 +109,11 @@ namespace SpoutText.UI.ViewModels
             get => _selectedFontFamily;
             set
             {
-                if (_selectedFontFamily != value && _selectedLayer != null)
-                {
-                    _selectedFontFamily = value;
-                    _selectedLayer.FontFamily = value;
-                    OnPropertyChanged(nameof(SelectedFontFamily));
-                    RefreshPreview();
-                }
+                if (_selectedFontFamily == value || _selectedLayer == null) return;
+                _selectedFontFamily = value;
+                _selectedLayer.FontFamily = value;
+                OnPropertyChanged();
+                RefreshPreview();
             }
         }
 
@@ -121,13 +122,11 @@ namespace SpoutText.UI.ViewModels
             get => _selectedFontSize;
             set
             {
-                if (Math.Abs(_selectedFontSize - value) > 0.01 && _selectedLayer != null)
-                {
-                    _selectedFontSize = value;
-                    _selectedLayer.FontSize = value;
-                    OnPropertyChanged(nameof(SelectedFontSize));
-                    RefreshPreview();
-                }
+                if (!(Math.Abs(_selectedFontSize - value) > 0.01) || _selectedLayer == null) return;
+                _selectedFontSize = value;
+                _selectedLayer.FontSize = value;
+                OnPropertyChanged();
+                RefreshPreview();
             }
         }
 
@@ -136,13 +135,11 @@ namespace SpoutText.UI.ViewModels
             get => _selectedFillColor;
             set
             {
-                if (_selectedFillColor != value && _selectedLayer != null)
-                {
-                    _selectedFillColor = value;
-                    _selectedLayer.FillColor = value;
-                    OnPropertyChanged(nameof(SelectedFillColor));
-                    RefreshPreview();
-                }
+                if (_selectedFillColor == value || _selectedLayer == null) return;
+                _selectedFillColor = value;
+                _selectedLayer.FillColor = value;
+                OnPropertyChanged();
+                RefreshPreview();
             }
         }
 
@@ -151,13 +148,11 @@ namespace SpoutText.UI.ViewModels
             get => _selectedPositionX;
             set
             {
-                if (Math.Abs(_selectedPositionX - value) > 0.01 && _selectedLayer != null)
-                {
-                    _selectedPositionX = value;
-                    _selectedLayer.PositionX = value;
-                    OnPropertyChanged(nameof(SelectedPositionX));
-                    RefreshPreview();
-                }
+                if (!(Math.Abs(_selectedPositionX - value) > 0.01) || _selectedLayer == null) return;
+                _selectedPositionX = value;
+                _selectedLayer.PositionX = value;
+                OnPropertyChanged();
+                RefreshPreview();
             }
         }
 
@@ -166,13 +161,11 @@ namespace SpoutText.UI.ViewModels
             get => _selectedPositionY;
             set
             {
-                if (Math.Abs(_selectedPositionY - value) > 0.01 && _selectedLayer != null)
-                {
-                    _selectedPositionY = value;
-                    _selectedLayer.PositionY = value;
-                    OnPropertyChanged(nameof(SelectedPositionY));
-                    RefreshPreview();
-                }
+                if (!(Math.Abs(_selectedPositionY - value) > 0.01) || _selectedLayer == null) return;
+                _selectedPositionY = value;
+                _selectedLayer.PositionY = value;
+                OnPropertyChanged();
+                RefreshPreview();
             }
         }
 
@@ -181,13 +174,11 @@ namespace SpoutText.UI.ViewModels
             get => _selectedScaleX;
             set
             {
-                if (Math.Abs(_selectedScaleX - value) > 0.01 && _selectedLayer != null)
-                {
-                    _selectedScaleX = value;
-                    _selectedLayer.ScaleX = value;
-                    OnPropertyChanged(nameof(SelectedScaleX));
-                    RefreshPreview();
-                }
+                if (!(Math.Abs(_selectedScaleX - value) > 0.01) || _selectedLayer == null) return;
+                _selectedScaleX = value;
+                _selectedLayer.ScaleX = value;
+                OnPropertyChanged();
+                RefreshPreview();
             }
         }
 
@@ -196,13 +187,11 @@ namespace SpoutText.UI.ViewModels
             get => _selectedScaleY;
             set
             {
-                if (Math.Abs(_selectedScaleY - value) > 0.01 && _selectedLayer != null)
-                {
-                    _selectedScaleY = value;
-                    _selectedLayer.ScaleY = value;
-                    OnPropertyChanged(nameof(SelectedScaleY));
-                    RefreshPreview();
-                }
+                if (!(Math.Abs(_selectedScaleY - value) > 0.01) || _selectedLayer == null) return;
+                _selectedScaleY = value;
+                _selectedLayer.ScaleY = value;
+                OnPropertyChanged();
+                RefreshPreview();
             }
         }
 
@@ -211,13 +200,11 @@ namespace SpoutText.UI.ViewModels
             get => _selectedOutlineEnabled;
             set
             {
-                if (_selectedOutlineEnabled != value && _selectedLayer != null)
-                {
-                    _selectedOutlineEnabled = value;
-                    _selectedLayer.OutlineEnabled = value;
-                    OnPropertyChanged(nameof(SelectedOutlineEnabled));
-                    RefreshPreview();
-                }
+                if (_selectedOutlineEnabled == value || _selectedLayer == null) return;
+                _selectedOutlineEnabled = value;
+                _selectedLayer.OutlineEnabled = value;
+                OnPropertyChanged();
+                RefreshPreview();
             }
         }
 
@@ -226,13 +213,11 @@ namespace SpoutText.UI.ViewModels
             get => _selectedOutlineColor;
             set
             {
-                if (_selectedOutlineColor != value && _selectedLayer != null)
-                {
-                    _selectedOutlineColor = value;
-                    _selectedLayer.OutlineColor = value;
-                    OnPropertyChanged(nameof(SelectedOutlineColor));
-                    RefreshPreview();
-                }
+                if (_selectedOutlineColor == value || _selectedLayer == null) return;
+                _selectedOutlineColor = value;
+                _selectedLayer.OutlineColor = value;
+                OnPropertyChanged();
+                RefreshPreview();
             }
         }
 
@@ -241,13 +226,11 @@ namespace SpoutText.UI.ViewModels
             get => _selectedOutlineThickness;
             set
             {
-                if (Math.Abs(_selectedOutlineThickness - value) > 0.01 && _selectedLayer != null)
-                {
-                    _selectedOutlineThickness = value;
-                    _selectedLayer.OutlineThickness = value;
-                    OnPropertyChanged(nameof(SelectedOutlineThickness));
-                    RefreshPreview();
-                }
+                if (!(Math.Abs(_selectedOutlineThickness - value) > 0.01) || _selectedLayer == null) return;
+                _selectedOutlineThickness = value;
+                _selectedLayer.OutlineThickness = value;
+                OnPropertyChanged();
+                RefreshPreview();
             }
         }
 
@@ -258,11 +241,9 @@ namespace SpoutText.UI.ViewModels
             get => _previewBitmap;
             private set
             {
-                if (_previewBitmap != value)
-                {
-                    _previewBitmap = value;
-                    OnPropertyChanged(nameof(PreviewBitmap));
-                }
+                if (_previewBitmap == value) return;
+                _previewBitmap = value;
+                OnPropertyChanged();
             }
         }
 
@@ -270,32 +251,23 @@ namespace SpoutText.UI.ViewModels
         {
             get
             {
-                var fontFamilies = Fonts.SystemFontFamilies.Select(f => f.Source).OrderBy(x => x);
+                IOrderedEnumerable<string> fontFamilies = Fonts.SystemFontFamilies.Select(f => f.Source).OrderBy(x => x);
                 return fontFamilies;
             }
         }
 
         private void AddLayer()
         {
-            var layer = new TextLayer($"Text {_layerManager.Layers.Count + 1}");
+            TextLayer layer = new TextLayer($"Text {_layerManager.Layers.Count + 1}");
             _layerManager.AddLayer(layer);
             SelectedLayer = layer;
         }
 
         private void DeleteLayer()
         {
-            if (SelectedLayer != null)
-            {
-                _layerManager.RemoveLayer(SelectedLayer);
-                if (_layerManager.Layers.Count > 0)
-                {
-                    SelectedLayer = _layerManager.Layers[_layerManager.Layers.Count - 1];
-                }
-                else
-                {
-                    SelectedLayer = null;
-                }
-            }
+            if (SelectedLayer == null) return;
+            _layerManager.RemoveLayer(SelectedLayer);
+            SelectedLayer = _layerManager.Layers.Count > 0 ? _layerManager.Layers[^1] : null;
         }
 
         private void MoveLayerUp()
@@ -366,12 +338,12 @@ namespace SpoutText.UI.ViewModels
             _isRenderingPreview = true;
             try
             {
-                var bitmap = _renderer.RenderLayers(_layerManager.Layers);
+                RenderTargetBitmap bitmap = _renderer.RenderLayers(_layerManager.Layers);
                 PreviewBitmap = bitmap;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error rendering preview: {ex.Message}");
+                Debug.WriteLine($"Error rendering preview: {ex.Message}");
             }
             finally
             {
@@ -389,7 +361,7 @@ namespace SpoutText.UI.ViewModels
             // Preview updated via selection change in view
         }
 
-        protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+        private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
@@ -398,31 +370,23 @@ namespace SpoutText.UI.ViewModels
     /// <summary>
     /// Simple relay command implementation for ICommand.
     /// </summary>
-    public class RelayCommand : ICommand
+    public class RelayCommand(Action<object?> execute, Func<object?, bool>? canExecute = null)
+        : ICommand
     {
-        private readonly Action<object?> _execute;
-        private readonly Func<object?, bool>? _canExecute;
-
         public event EventHandler? CanExecuteChanged
         {
-            add { CommandManager.RequerySuggested += value; }
-            remove { CommandManager.RequerySuggested -= value; }
-        }
-
-        public RelayCommand(Action<object?> execute, Func<object?, bool>? canExecute = null)
-        {
-            _execute = execute;
-            _canExecute = canExecute;
+            add => CommandManager.RequerySuggested += value;
+            remove => CommandManager.RequerySuggested -= value;
         }
 
         public bool CanExecute(object? parameter)
         {
-            return _canExecute?.Invoke(parameter) ?? true;
+            return canExecute?.Invoke(parameter) ?? true;
         }
 
         public void Execute(object? parameter)
         {
-            _execute(parameter);
+            execute(parameter);
         }
     }
 }
