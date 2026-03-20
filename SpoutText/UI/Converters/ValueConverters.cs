@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
 
@@ -29,7 +30,7 @@ namespace SpoutText.UI.Converters
     {
         public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
-            return value != null ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
+            return value != null ? Visibility.Visible : Visibility.Collapsed;
         }
 
         public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)

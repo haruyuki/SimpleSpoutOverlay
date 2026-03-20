@@ -102,14 +102,12 @@ namespace SpoutText.Rendering
                             GLFormats.RGBA,
                             false, // WPF pixel buffer is already in top-left origin for our receiver path.
                             0);
-                        return;
                     }
                 }
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"Error sending Spout frame: {ex.Message}");
-                return;
             }
         }
 

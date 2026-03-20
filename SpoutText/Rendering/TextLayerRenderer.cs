@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using System.Globalization;
+using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using SpoutText.Models;
@@ -45,7 +46,7 @@ namespace SpoutText.Rendering
 
             FormattedText formattedText = new FormattedText(
                 layer.Text,
-                System.Globalization.CultureInfo.CurrentCulture,
+                CultureInfo.CurrentCulture,
                 FlowDirection.LeftToRight,
                 typeface,
                 layer.FontSize,

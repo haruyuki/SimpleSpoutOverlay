@@ -37,9 +37,9 @@ namespace SpoutText.Rendering
                 // Un-premultiply alpha if alpha > 0
                 if (a > 0)
                 {
-                    r = (byte)(((int)r * 255) / a);
-                    g = (byte)(((int)g * 255) / a);
-                    b = (byte)(((int)b * 255) / a);
+                    r = (byte)((r * 255) / a);
+                    g = (byte)((g * 255) / a);
+                    b = (byte)((b * 255) / a);
                 }
 
                 // Convert to RGBA

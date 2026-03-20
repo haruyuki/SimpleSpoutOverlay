@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using System.Globalization;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -113,9 +114,9 @@ public partial class ColorPickerWindow
         if (hex.Length != 6)
             return false;
 
-        if (!byte.TryParse(hex[..2], System.Globalization.NumberStyles.HexNumber, null, out r))
+        if (!byte.TryParse(hex[..2], NumberStyles.HexNumber, null, out r))
             return false;
-        return byte.TryParse(hex.AsSpan(2, 2), System.Globalization.NumberStyles.HexNumber, null, out g) && byte.TryParse(hex.AsSpan(4, 2), System.Globalization.NumberStyles.HexNumber, null, out b);
+        return byte.TryParse(hex.AsSpan(2, 2), NumberStyles.HexNumber, null, out g) && byte.TryParse(hex.AsSpan(4, 2), NumberStyles.HexNumber, null, out b);
     }
 
     private void OnOkClick(object sender, RoutedEventArgs e)
