@@ -82,6 +82,12 @@
                 <ListBox Grid.Row="1"
                          ItemsSource="{Binding Layers}"
                          SelectedItem="{Binding SelectedLayer}"
+                         AllowDrop="True"
+                         PreviewMouseLeftButtonDown="OnLayerListPreviewMouseLeftButtonDown"
+                         PreviewMouseMove="OnLayerListPreviewMouseMove"
+                         DragOver="OnLayerListDragOver"
+                         DragLeave="OnLayerListDragLeave"
+                         Drop="OnLayerListDrop"
                          Margin="12"
                          MinHeight="260">
                     <ListBox.ItemTemplate>

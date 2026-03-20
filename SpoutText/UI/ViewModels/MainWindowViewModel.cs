@@ -379,6 +379,45 @@ namespace SpoutText.UI.ViewModels
             }
         }
 
+        public void ReorderLayer(TextLayer draggedLayer, TextLayer? targetLayer, bool insertAfter)
+        {
+            int fromIndex = _layerManager.Layers.IndexOf(draggedLayer);
+            if (fromIndex < 0)
+            {
+                return;
+            }
+
+            int toIndex;
+            if (targetLayer == null)
+            {
+                toIndex = _layerManager.Layers.Count - 1;
+            }
+            else
+            {
+                int targetIndex = _layerManager.Layers.IndexOf(targetLayer);
+                if (targetIndex < 0)
+                {
+                    return;
+                }
+
+                int rawInsertIndex = targetIndex + (insertAfter ? 1 : 0);
+                if (fromIndex < rawInsertIndex)
+                {
+                    rawInsertIndex--;
+                }
+
+                toIndex = Math.Clamp(rawInsertIndex, 0, _layerManager.Layers.Count - 1);
+            }
+
+            if (toIndex < 0)
+            {
+                return;
+            }
+
+            _layerManager.MoveLayer(fromIndex, toIndex);
+            SelectedLayer = draggedLayer;
+        }
+
         private void UpdateSelectedLayerProperties()
         {
             if (_selectedLayer == null)

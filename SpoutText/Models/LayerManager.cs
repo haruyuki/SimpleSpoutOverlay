@@ -43,15 +43,23 @@ namespace SpoutText.Models
         {
             int index = _layers.IndexOf(layer);
             if (index <= 0) return;
-            _layers.Move(index, index - 1);
-            LayersChanged?.Invoke();
+            MoveLayer(index, index - 1);
         }
 
         public void MoveLayerDown(TextLayer layer)
         {
             int index = _layers.IndexOf(layer);
             if (index >= _layers.Count - 1) return;
-            _layers.Move(index, index + 1);
+            MoveLayer(index, index + 1);
+        }
+
+        public void MoveLayer(int fromIndex, int toIndex)
+        {
+            if (fromIndex < 0 || fromIndex >= _layers.Count) return;
+            if (toIndex < 0 || toIndex >= _layers.Count) return;
+            if (fromIndex == toIndex) return;
+
+            _layers.Move(fromIndex, toIndex);
             LayersChanged?.Invoke();
         }
     }
