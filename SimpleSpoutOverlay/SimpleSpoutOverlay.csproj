@@ -9,6 +9,7 @@
         <Platform>x64</Platform>
         <Platforms>x64</Platforms>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <ApplicationIcon>SimpleSpoutOverlay.ico</ApplicationIcon>
     </PropertyGroup>
 
     <ItemGroup>
