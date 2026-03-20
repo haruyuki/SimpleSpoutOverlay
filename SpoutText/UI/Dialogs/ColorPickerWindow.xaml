@@ -1,0 +1,90 @@
+﻿<Window x:Class="SpoutText.UI.Dialogs.ColorPickerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Choose Color"
+        Width="390"
+        Height="360"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource Brush.WindowBackground}">
+    <Border Margin="12"
+            Padding="12"
+            Background="{DynamicResource Brush.PanelBackground}"
+            BorderBrush="{DynamicResource Brush.Border}"
+            BorderThickness="1"
+            CornerRadius="8">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Height="54" BorderBrush="{DynamicResource Brush.Border}" BorderThickness="1" CornerRadius="4" Margin="0,0,0,12">
+            <Rectangle x:Name="PreviewRect" Fill="White" />
+        </Border>
+
+        <Grid Grid.Row="1" Margin="0,0,0,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="26" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="48" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="A" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextMuted}" />
+            <Slider x:Name="AlphaSlider" Grid.Column="1" Minimum="0" Maximum="255" ValueChanged="OnChannelChanged" />
+            <TextBlock x:Name="AlphaValueText" Grid.Column="2" Text="255" VerticalAlignment="Center" HorizontalAlignment="Right" Foreground="{DynamicResource Brush.TextPrimary}" />
+        </Grid>
+
+        <Grid Grid.Row="2" Margin="0,0,0,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="26" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="48" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="R" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextMuted}" />
+            <Slider x:Name="RedSlider" Grid.Column="1" Minimum="0" Maximum="255" ValueChanged="OnChannelChanged" />
+            <TextBlock x:Name="RedValueText" Grid.Column="2" Text="255" VerticalAlignment="Center" HorizontalAlignment="Right" Foreground="{DynamicResource Brush.TextPrimary}" />
+        </Grid>
+
+        <Grid Grid.Row="3" Margin="0,0,0,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="26" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="48" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="G" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextMuted}" />
+            <Slider x:Name="GreenSlider" Grid.Column="1" Minimum="0" Maximum="255" ValueChanged="OnChannelChanged" />
+            <TextBlock x:Name="GreenValueText" Grid.Column="2" Text="255" VerticalAlignment="Center" HorizontalAlignment="Right" Foreground="{DynamicResource Brush.TextPrimary}" />
+        </Grid>
+
+        <Grid Grid.Row="4" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="26" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="48" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="B" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="{DynamicResource Brush.TextMuted}" />
+            <Slider x:Name="BlueSlider" Grid.Column="1" Minimum="0" Maximum="255" ValueChanged="OnChannelChanged" />
+            <TextBlock x:Name="BlueValueText" Grid.Column="2" Text="255" VerticalAlignment="Center" HorizontalAlignment="Right" Foreground="{DynamicResource Brush.TextPrimary}" />
+        </Grid>
+
+        <TextBlock Grid.Row="5"
+                   x:Name="HexText"
+                   Text="#FFFFFFFF"
+                   FontFamily="Consolas"
+                   FontSize="13"
+                   VerticalAlignment="Top"
+                   Foreground="{DynamicResource Brush.TextPrimary}" />
+
+        <StackPanel Grid.Row="6" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="OK" Width="88" Margin="0,0,8,0" IsDefault="True" Click="OnOkClick" />
+            <Button Content="Cancel" Width="88" IsCancel="True" Style="{DynamicResource SecondaryButtonStyle}" />
+        </StackPanel>
+    </Grid>
+    </Border>
+</Window>
+
