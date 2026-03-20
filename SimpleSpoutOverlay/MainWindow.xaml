@@ -183,9 +183,9 @@
                               HorizontalScrollBarVisibility="Disabled"
                               HorizontalContentAlignment="Stretch"
                               Visibility="{Binding SelectedLayer, Converter={StaticResource SelectedLayerToVisibilityConverter}}">
-                    <StackPanel Margin="12, 12,0,0"
-                                HorizontalAlignment="Stretch"
-                                Width="{Binding ElementName=LayerPropertiesScrollViewer, Path=ViewportWidth}">
+                    <Border Padding="0,0,12,0">
+                    <StackPanel Margin="12,12,0,0"
+                                HorizontalAlignment="Stretch">
                         <StackPanel Margin="0,0,0,14">
                             <StackPanel.Style>
                                 <Style TargetType="StackPanel">
@@ -216,7 +216,7 @@
                                 <TextBlock Text="Font Size" Style="{DynamicResource FieldLabelStyle}" />
                                 <Grid>
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="250" />
                                         <ColumnDefinition Width="56" />
                                     </Grid.ColumnDefinitions>
                                     <Slider Grid.Column="0"
@@ -273,7 +273,7 @@
                             <TextBlock Text="Position X" Style="{DynamicResource FieldLabelStyle}" />
                             <Grid>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="250" />
                                     <ColumnDefinition Width="56" />
                                 </Grid.ColumnDefinitions>
                                 <Slider Grid.Column="0"
@@ -296,7 +296,7 @@
                             <TextBlock Text="Position Y" Style="{DynamicResource FieldLabelStyle}" />
                             <Grid>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="250" />
                                     <ColumnDefinition Width="56" />
                                 </Grid.ColumnDefinitions>
                                 <Slider Grid.Column="0"
@@ -319,7 +319,7 @@
                             <TextBlock Text="Scale X" Style="{DynamicResource FieldLabelStyle}" />
                             <Grid>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="250" />
                                     <ColumnDefinition Width="56" />
                                 </Grid.ColumnDefinitions>
                                 <Slider Grid.Column="0"
@@ -342,7 +342,7 @@
                             <TextBlock Text="Scale Y" Style="{DynamicResource FieldLabelStyle}" />
                             <Grid>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="250" />
                                     <ColumnDefinition Width="56" />
                                 </Grid.ColumnDefinitions>
                                 <Slider Grid.Column="0"
@@ -397,7 +397,7 @@
                                 <TextBlock Text="Outline Thickness" Style="{DynamicResource FieldLabelStyle}" />
                                 <Grid>
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="250" />
                                         <ColumnDefinition Width="56" />
                                     </Grid.ColumnDefinitions>
                                     <Slider Grid.Column="0"
@@ -417,6 +417,7 @@
                             </StackPanel>
                         </StackPanel>
                     </StackPanel>
+                    </Border>
                 </ScrollViewer>
 
                 <TextBlock Text="No layer selected"
