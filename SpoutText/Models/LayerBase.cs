@@ -1,4 +1,6 @@
-﻿namespace SpoutText.Models;
+﻿using JetBrains.Annotations;
+
+namespace SpoutText.Models;
 
 /// Base layer type used by the renderer and layer list.
 public abstract class LayerBase
@@ -11,7 +13,8 @@ public abstract class LayerBase
 
     public double ScaleY { get; set; } = 1.0;
 
-    public virtual string LayerType => "Layer";
+    protected virtual string LayerType => "Layer";
 
+    [UsedImplicitly]
     public virtual string DisplayName => LayerType;
 }

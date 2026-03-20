@@ -11,7 +11,14 @@ namespace SpoutText.Rendering
     /// Uses FormattedText and Geometry for text outline support.
     public class TextLayerRenderer(int width, int height, double dpiX = 96, double dpiY = 96)
     {
-        private readonly Dictionary<string, BitmapSource?> _imageCache = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, ImageCacheEntry> _imageCache = new(StringComparer.OrdinalIgnoreCase);
+
+        private sealed class ImageCacheEntry(BitmapSource image, DateTime lastWriteTimeUtc, long length)
+        {
+            public BitmapSource Image { get; } = image;
+            public DateTime LastWriteTimeUtc { get; } = lastWriteTimeUtc;
+            public long Length { get; } = length;
+        }
         
         /// Renders all layers to a bitmap with transparent background.
         /// Renders in reverse order so the first item in the list appears on top visually.
@@ -108,31 +115,35 @@ namespace SpoutText.Rendering
                 return null;
             }
 
-            if (_imageCache.TryGetValue(path, out BitmapSource? cached))
-            {
-                return cached;
-            }
-
             try
             {
-                if (!File.Exists(path))
+                string normalizedPath = Path.GetFullPath(path);
+                if (!File.Exists(normalizedPath))
                 {
-                    _imageCache[path] = null;
+                    _imageCache.Remove(normalizedPath);
                     return null;
+                }
+
+                FileInfo fileInfo = new(normalizedPath);
+                if (_imageCache.TryGetValue(normalizedPath, out ImageCacheEntry? cached)
+                    && cached.LastWriteTimeUtc == fileInfo.LastWriteTimeUtc
+                    && cached.Length == fileInfo.Length)
+                {
+                    return cached.Image;
                 }
 
                 BitmapImage image = new();
                 image.BeginInit();
                 image.CacheOption = BitmapCacheOption.OnLoad;
-                image.UriSource = new Uri(path, UriKind.Absolute);
+                image.UriSource = new Uri(normalizedPath, UriKind.Absolute);
                 image.EndInit();
                 image.Freeze();
-                _imageCache[path] = image;
+
+                _imageCache[normalizedPath] = new ImageCacheEntry(image, fileInfo.LastWriteTimeUtc, fileInfo.Length);
                 return image;
             }
             catch
             {
-                _imageCache[path] = null;
                 return null;
             }
         }

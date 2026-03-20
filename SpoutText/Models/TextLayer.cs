@@ -8,7 +8,7 @@ namespace SpoutText.Models
         // Text properties
         public string Text { get; set; } = text;
 
-        public override string LayerType => "Text";
+        protected override string LayerType => "Text";
 
         public override string DisplayName => string.IsNullOrWhiteSpace(Text) ? "Text" : Text;
 
