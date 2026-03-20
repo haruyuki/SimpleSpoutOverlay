@@ -6,6 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 using JetBrains.Annotations;
 using Microsoft.Win32;
 using SpoutText.Models;
@@ -25,6 +26,10 @@ namespace SpoutText.UI.ViewModels
         private bool _spoutEnabled;
         private bool _disposed;
         private readonly SessionPersistenceService _sessionPersistenceService;
+        private readonly DispatcherTimer _toastTimer;
+        private string _toastMessage = string.Empty;
+        private bool _isToastVisible;
+        private bool _toastIsError;
 
         // Selected layer properties
         private string _selectedText = "";
@@ -71,6 +76,11 @@ namespace SpoutText.UI.ViewModels
             SaveSetupCommand = new RelayCommand(_ => ExecuteSaveSetup());
             LoadSetupCommand = new RelayCommand(_ => ExecuteLoadSetup());
             _sessionPersistenceService = new SessionPersistenceService();
+            _toastTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromSeconds(3)
+            };
+            _toastTimer.Tick += OnToastTimerTick;
 
             InitializeRenderer();
             InitializePreview();
@@ -114,6 +124,42 @@ namespace SpoutText.UI.ViewModels
             {
                 if (_spoutEnabled == value) return;
                 _spoutEnabled = value;
+                OnPropertyChanged();
+            }
+        }
+
+        [UsedImplicitly]
+        public string ToastMessage
+        {
+            get => _toastMessage;
+            private set
+            {
+                if (_toastMessage == value) return;
+                _toastMessage = value;
+                OnPropertyChanged();
+            }
+        }
+
+        [UsedImplicitly]
+        public bool IsToastVisible
+        {
+            get => _isToastVisible;
+            private set
+            {
+                if (_isToastVisible == value) return;
+                _isToastVisible = value;
+                OnPropertyChanged();
+            }
+        }
+
+        [UsedImplicitly]
+        public bool ToastIsError
+        {
+            get => _toastIsError;
+            private set
+            {
+                if (_toastIsError == value) return;
+                _toastIsError = value;
                 OnPropertyChanged();
             }
         }
@@ -451,10 +497,12 @@ namespace SpoutText.UI.ViewModels
             try
             {
                 SessionPersistenceService.SaveToPath(dialog.FileName, CaptureSessionState());
+                ShowToast($"Setup saved: {Path.GetFileName(dialog.FileName)}");
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"Failed to save session file: {ex.Message}");
+                ShowToast("Failed to save setup file.", isError: true);
             }
         }
 
@@ -475,11 +523,17 @@ namespace SpoutText.UI.ViewModels
                 if (state != null)
                 {
                     RestoreSessionState(state);
+                    ShowToast($"Setup loaded: {Path.GetFileName(dialog.FileName)}");
+                }
+                else
+                {
+                    ShowToast("Invalid or empty setup file.", isError: true);
                 }
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"Failed to load session file: {ex.Message}");
+                ShowToast("Failed to load setup file.", isError: true);
             }
         }
 
@@ -497,6 +551,22 @@ namespace SpoutText.UI.ViewModels
             {
                 Debug.WriteLine($"Failed to load default session: {ex.Message}");
             }
+        }
+
+        private void ShowToast(string message, bool isError = false)
+        {
+            ToastMessage = message;
+            ToastIsError = isError;
+            IsToastVisible = true;
+
+            _toastTimer.Stop();
+            _toastTimer.Start();
+        }
+
+        private void OnToastTimerTick(object? sender, EventArgs e)
+        {
+            _toastTimer.Stop();
+            IsToastVisible = false;
         }
 
         public void SaveDefaultSession()
@@ -627,6 +697,8 @@ namespace SpoutText.UI.ViewModels
             }
 
             _spoutManager?.Dispose();
+            _toastTimer.Stop();
+            _toastTimer.Tick -= OnToastTimerTick;
             _disposed = true;
             GC.SuppressFinalize(this);
         }
