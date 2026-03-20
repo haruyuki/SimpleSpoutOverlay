@@ -19,13 +19,57 @@
     </Window.Resources>
 
     <Grid Margin="14" Background="{DynamicResource Brush.WindowBackground}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="290" />
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="360" />
         </Grid.ColumnDefinitions>
 
-        <Border Grid.Column="0" Style="{DynamicResource PanelBorderStyle}" Margin="0,0,10,0">
+        <Border Grid.Row="0"
+                Grid.ColumnSpan="3"
+                Style="{DynamicResource PanelBorderStyle}"
+                Margin="0,0,0,10"
+                Padding="10">
+            <DockPanel LastChildFill="False">
+                <TextBlock Text="Session"
+                           VerticalAlignment="Center"
+                           Foreground="{DynamicResource Brush.TextMuted}"
+                           Margin="0,0,10,0" />
+
+                <Button Command="{Binding SaveSetupCommand}"
+                        Content="Save Setup"
+                        Style="{DynamicResource SecondaryButtonStyle}"
+                        Margin="0,0,8,0" />
+                <Button Command="{Binding LoadSetupCommand}"
+                        Content="Load Setup"
+                        Style="{DynamicResource SecondaryButtonStyle}" />
+
+                <Button Command="{Binding ToggleSpoutCommand}"
+                        DockPanel.Dock="Right"
+                        Padding="12,8"
+                        Margin="8,0,0,0">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource SuccessButtonStyle}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding SpoutEnabled}" Value="True">
+                                    <Setter Property="Background" Value="#d2691e" />
+                                    <Setter Property="Content" Value="Spout Active" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding SpoutEnabled}" Value="False">
+                                    <Setter Property="Content" Value="Start Spout" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
+            </DockPanel>
+        </Border>
+
+        <Border Grid.Row="1" Grid.Column="0" Style="{DynamicResource PanelBorderStyle}" Margin="0,0,10,0">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -48,14 +92,21 @@
                 </ListBox>
 
                 <StackPanel Grid.Row="2" Margin="12,0,12,12">
-                    <Button Command="{Binding AddLayerCommand}" Content="Add Layer" Margin="0,0,0,8" />
-                    <Button Command="{Binding SaveSetupCommand}" Content="Save Setup" Margin="0,0,0,8" />
-                    <Button Command="{Binding LoadSetupCommand}" Content="Load Setup" Margin="0,0,0,8" />
-                    <Button Command="{Binding DeleteLayerCommand}"
-                            Content="Delete Layer"
-                            Style="{DynamicResource DangerButtonStyle}"
-                            IsEnabled="{Binding SelectedLayer, Converter={StaticResource HasValueToBoolConverter}}"
-                            Margin="0,0,0,8" />
+                    <Grid Margin="0,0,0,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="8" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Button Grid.Column="0"
+                                Command="{Binding AddLayerCommand}"
+                                Content="Add Layer" />
+                        <Button Grid.Column="2"
+                                Command="{Binding DeleteLayerCommand}"
+                                Content="Delete"
+                                Style="{DynamicResource DangerButtonStyle}"
+                                IsEnabled="{Binding SelectedLayer, Converter={StaticResource HasValueToBoolConverter}}" />
+                    </Grid>
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
@@ -77,31 +128,13 @@
             </Grid>
         </Border>
 
-        <Border Grid.Column="1" Style="{DynamicResource PanelBorderStyle}" Margin="0,0,10,0">
+        <Border Grid.Row="1" Grid.Column="1" Style="{DynamicResource PanelBorderStyle}" Margin="0,0,10,0">
             <DockPanel LastChildFill="True">
                 <DockPanel DockPanel.Dock="Top" LastChildFill="False">
                     <TextBlock Text="Preview (1920 x 1080)" 
                                Style="{DynamicResource PanelTitleStyle}" 
                                DockPanel.Dock="Left"
                                VerticalAlignment="Center" />
-                    <Button Command="{Binding ToggleSpoutCommand}" 
-                            DockPanel.Dock="Right"
-                            Padding="12,8"
-                            Margin="0,0,0,12">
-                        <Button.Style>
-                            <Style TargetType="Button" BasedOn="{StaticResource SuccessButtonStyle}">
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding SpoutEnabled}" Value="True">
-                                        <Setter Property="Background" Value="#d2691e" />
-                                        <Setter Property="Content" Value="⊗ Spout Active" />
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding SpoutEnabled}" Value="False">
-                                        <Setter Property="Content" Value="⊕ Start Spout" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Button.Style>
-                    </Button>
                 </DockPanel>
                 <Viewbox Margin="12"
                          Stretch="Uniform"
@@ -120,7 +153,7 @@
             </DockPanel>
         </Border>
 
-        <Border Grid.Column="2" Style="{DynamicResource PanelBorderStyle}">
+        <Border Grid.Row="1" Grid.Column="2" Style="{DynamicResource PanelBorderStyle}">
             <DockPanel LastChildFill="True">
                 <TextBlock DockPanel.Dock="Top" Text="Layer Properties" Style="{DynamicResource PanelTitleStyle}" />
 
@@ -308,7 +341,8 @@
             </DockPanel>
         </Border>
 
-        <Border Grid.ColumnSpan="3"
+        <Border Grid.RowSpan="2"
+                Grid.ColumnSpan="3"
                 HorizontalAlignment="Right"
                 VerticalAlignment="Top"
                 Margin="0,10,10,0"
