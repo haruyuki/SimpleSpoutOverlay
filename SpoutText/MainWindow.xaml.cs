@@ -1,6 +1,7 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -139,6 +140,27 @@ public partial class MainWindow : Window
                 viewModel.CommitSliderUndoGesture();
             }
         }
+    }
+
+    private void OnNumericEditorGotKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+    {
+        if (sender is TextBox textBox)
+        {
+            textBox.SelectAll();
+        }
+    }
+
+    private void OnNumericEditorKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter || sender is not TextBox textBox)
+        {
+            return;
+        }
+
+        BindingExpression? expression = textBox.GetBindingExpression(TextBox.TextProperty);
+        expression?.UpdateSource();
+        Keyboard.ClearFocus();
+        e.Handled = true;
     }
 
     private void OnLayerListDragOver(object sender, DragEventArgs e)

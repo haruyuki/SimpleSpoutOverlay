@@ -201,10 +201,12 @@
                                         Thumb.DragStarted="OnPropertySliderDragStarted"
                                         Thumb.DragCompleted="OnPropertySliderDragCompleted"
                                         Margin="0,0,8,0" />
-                                <TextBlock Grid.Column="1"
-                                           Text="{Binding SelectedFontSize, StringFormat='F0'}"
-                                           VerticalAlignment="Center"
-                                           Foreground="{DynamicResource Brush.TextPrimary}" />
+                                <TextBox Grid.Column="1"
+                                         Style="{DynamicResource NumericValueEditorStyle}"
+                                         Text="{Binding SelectedFontSize, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat=F0}"
+                                         ToolTip="Click to type a value"
+                                         GotKeyboardFocus="OnNumericEditorGotKeyboardFocus"
+                                         KeyDown="OnNumericEditorKeyDown" />
                             </Grid>
                         </StackPanel>
 
@@ -238,10 +240,12 @@
                                         Thumb.DragStarted="OnPropertySliderDragStarted"
                                         Thumb.DragCompleted="OnPropertySliderDragCompleted"
                                         Margin="0,0,8,0" />
-                                <TextBlock Grid.Column="1"
-                                           Text="{Binding SelectedPositionX, StringFormat='F0'}"
-                                           VerticalAlignment="Center"
-                                           Foreground="{DynamicResource Brush.TextPrimary}" />
+                                <TextBox Grid.Column="1"
+                                         Style="{DynamicResource NumericValueEditorStyle}"
+                                         Text="{Binding SelectedPositionX, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat=F0}"
+                                         ToolTip="Click to type a value"
+                                         GotKeyboardFocus="OnNumericEditorGotKeyboardFocus"
+                                         KeyDown="OnNumericEditorKeyDown" />
                             </Grid>
                         </StackPanel>
 
@@ -259,10 +263,12 @@
                                         Thumb.DragStarted="OnPropertySliderDragStarted"
                                         Thumb.DragCompleted="OnPropertySliderDragCompleted"
                                         Margin="0,0,8,0" />
-                                <TextBlock Grid.Column="1"
-                                           Text="{Binding SelectedPositionY, StringFormat='F0'}"
-                                           VerticalAlignment="Center"
-                                           Foreground="{DynamicResource Brush.TextPrimary}" />
+                                <TextBox Grid.Column="1"
+                                         Style="{DynamicResource NumericValueEditorStyle}"
+                                         Text="{Binding SelectedPositionY, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat=F0}"
+                                         ToolTip="Click to type a value"
+                                         GotKeyboardFocus="OnNumericEditorGotKeyboardFocus"
+                                         KeyDown="OnNumericEditorKeyDown" />
                             </Grid>
                         </StackPanel>
 
@@ -280,10 +286,12 @@
                                         Thumb.DragStarted="OnPropertySliderDragStarted"
                                         Thumb.DragCompleted="OnPropertySliderDragCompleted"
                                         Margin="0,0,8,0" />
-                                <TextBlock Grid.Column="1"
-                                           Text="{Binding SelectedScaleX, StringFormat='F2'}"
-                                           VerticalAlignment="Center"
-                                           Foreground="{DynamicResource Brush.TextPrimary}" />
+                                <TextBox Grid.Column="1"
+                                         Style="{DynamicResource NumericValueEditorStyle}"
+                                         Text="{Binding SelectedScaleX, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat=F2}"
+                                         ToolTip="Click to type a value"
+                                         GotKeyboardFocus="OnNumericEditorGotKeyboardFocus"
+                                         KeyDown="OnNumericEditorKeyDown" />
                             </Grid>
                         </StackPanel>
 
@@ -301,10 +309,12 @@
                                         Thumb.DragStarted="OnPropertySliderDragStarted"
                                         Thumb.DragCompleted="OnPropertySliderDragCompleted"
                                         Margin="0,0,8,0" />
-                                <TextBlock Grid.Column="1"
-                                           Text="{Binding SelectedScaleY, StringFormat='F2'}"
-                                           VerticalAlignment="Center"
-                                           Foreground="{DynamicResource Brush.TextPrimary}" />
+                                <TextBox Grid.Column="1"
+                                         Style="{DynamicResource NumericValueEditorStyle}"
+                                         Text="{Binding SelectedScaleY, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat=F2}"
+                                         ToolTip="Click to type a value"
+                                         GotKeyboardFocus="OnNumericEditorGotKeyboardFocus"
+                                         KeyDown="OnNumericEditorKeyDown" />
                             </Grid>
                         </StackPanel>
 
@@ -342,10 +352,12 @@
                                         Thumb.DragStarted="OnPropertySliderDragStarted"
                                         Thumb.DragCompleted="OnPropertySliderDragCompleted"
                                         Margin="0,0,8,0" />
-                                <TextBlock Grid.Column="1"
-                                           Text="{Binding SelectedOutlineThickness, StringFormat='F1'}"
-                                           VerticalAlignment="Center"
-                                           Foreground="{DynamicResource Brush.TextPrimary}" />
+                                <TextBox Grid.Column="1"
+                                         Style="{DynamicResource NumericValueEditorStyle}"
+                                         Text="{Binding SelectedOutlineThickness, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat=F1}"
+                                         ToolTip="Click to type a value"
+                                         GotKeyboardFocus="OnNumericEditorGotKeyboardFocus"
+                                         KeyDown="OnNumericEditorKeyDown" />
                             </Grid>
                         </StackPanel>
                     </StackPanel>

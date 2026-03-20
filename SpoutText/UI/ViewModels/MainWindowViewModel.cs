@@ -36,6 +36,17 @@ namespace SpoutText.UI.ViewModels
         private bool _isToastVisible;
         private bool _toastIsError;
 
+        private const double MinFontSize = 8;
+        private const double MaxFontSize = 200;
+        private const double MinPositionX = 0;
+        private const double MaxPositionX = 1920;
+        private const double MinPositionY = 0;
+        private const double MaxPositionY = 1080;
+        private const double MinScale = 0.1;
+        private const double MaxScale = 3;
+        private const double MinOutlineThickness = 0.5;
+        private const double MaxOutlineThickness = 20;
+
         // Selected layer properties
         private string _selectedText = "";
         private string _selectedFontFamily = "Arial";
@@ -227,6 +238,7 @@ namespace SpoutText.UI.ViewModels
             get => _selectedFontSize;
             set
             {
+                value = Math.Clamp(value, MinFontSize, MaxFontSize);
                 if (!(Math.Abs(_selectedFontSize - value) > 0.01) || _selectedLayer == null) return;
                 RecordPropertyUndo();
                 _selectedFontSize = value;
@@ -255,6 +267,7 @@ namespace SpoutText.UI.ViewModels
             get => _selectedPositionX;
             set
             {
+                value = Math.Clamp(value, MinPositionX, MaxPositionX);
                 if (!(Math.Abs(_selectedPositionX - value) > 0.01) || _selectedLayer == null) return;
                 RecordPropertyUndo();
                 _selectedPositionX = value;
@@ -269,6 +282,7 @@ namespace SpoutText.UI.ViewModels
             get => _selectedPositionY;
             set
             {
+                value = Math.Clamp(value, MinPositionY, MaxPositionY);
                 if (!(Math.Abs(_selectedPositionY - value) > 0.01) || _selectedLayer == null) return;
                 RecordPropertyUndo();
                 _selectedPositionY = value;
@@ -283,6 +297,7 @@ namespace SpoutText.UI.ViewModels
             get => _selectedScaleX;
             set
             {
+                value = Math.Clamp(value, MinScale, MaxScale);
                 if (!(Math.Abs(_selectedScaleX - value) > 0.01) || _selectedLayer == null) return;
                 RecordPropertyUndo();
                 _selectedScaleX = value;
@@ -297,6 +312,7 @@ namespace SpoutText.UI.ViewModels
             get => _selectedScaleY;
             set
             {
+                value = Math.Clamp(value, MinScale, MaxScale);
                 if (!(Math.Abs(_selectedScaleY - value) > 0.01) || _selectedLayer == null) return;
                 RecordPropertyUndo();
                 _selectedScaleY = value;
@@ -339,6 +355,7 @@ namespace SpoutText.UI.ViewModels
             get => _selectedOutlineThickness;
             set
             {
+                value = Math.Clamp(value, MinOutlineThickness, MaxOutlineThickness);
                 if (!(Math.Abs(_selectedOutlineThickness - value) > 0.01) || _selectedLayer == null) return;
                 RecordPropertyUndo();
                 _selectedOutlineThickness = value;
