@@ -1,33 +1,29 @@
 ﻿# SpoutText
 
-A WPF desktop app for building transparent text overlays with multiple editable layers.
+SpoutText is a WPF desktop app for building transparent text overlays and sending them directly to a Spout output.
 
-The app currently focuses on a reliable editor + live preview workflow. Spout output has been removed for now, but the renderer keeps an alpha-safe pipeline so output adapters (like Spout) can be added later.
+The editor preview and Spout output both use the same alpha-safe render pipeline, so what you see in the canvas is what gets sent.
 
-## Features
+## Current Functionality
 
-- Multiple text layers with add/delete/reorder
-- Per-layer text, font family, size, fill color, outline, position, and scale
-- Transparent preview rendering (`Pbgra32`)
-- Geometry-based text rendering (`FormattedText` -> `Geometry`) with proper outline drawing
-- WPF color picker dialog for fill/outline colors
+- Multi-layer text editor (add/delete/reorder)
+- Per-layer text controls: font, size, fill, outline, position, and scale
+- Live preview at `1920x1080`
+- Spout sender output (toggle from the Preview panel)
+- Transparent rendering pipeline (`PixelFormats.Pbgra32` -> RGBA for Spout)
+- Fallback sender initialization for broader machine compatibility
 
-## Project Structure
+## Requirements
 
-- `SpoutText/MainWindow.xaml` - app UI layout
-- `SpoutText/MainWindow.xaml.cs` - window logic and color picker wiring
-- `SpoutText/Models/TextLayer.cs` - layer model
-- `SpoutText/Models/LayerManager.cs` - layer collection/order/selection management
-- `SpoutText/UI/ViewModels/MainWindowViewModel.cs` - MVVM state + commands
-- `SpoutText/Rendering/TextLayerRenderer.cs` - transparent bitmap renderer
+- Windows 10/11 x64
+- .NET 8 SDK
+- A Spout-compatible receiver app (for example OBS with Spout plugin, TouchDesigner, Resolume, etc.)
 
 ## Build
 
 ```powershell
 cd C:\Users\Haru\RiderProjects\SpoutText
-
 dotnet restore
-
 dotnet build -c Debug
 ```
 
@@ -35,14 +31,27 @@ dotnet build -c Debug
 
 ```powershell
 cd C:\Users\Haru\RiderProjects\SpoutText
-
-dotnet run --project SpoutText
+dotnet run --project .\SpoutText\SpoutText.csproj
 ```
 
-## Transparency Note (Future Output Ready)
+## Using Spout Output
 
-The preview is rendered to `RenderTargetBitmap` using `PixelFormats.Pbgra32` and a transparent background. This keeps alpha information intact and makes it straightforward to reintroduce output backends (for example, Spout) later.
+1. Launch the app.
+2. Create/edit text layers.
+3. Click `Start Spout` in the Preview panel.
+4. In your receiver app, select sender name `SpoutText`.
+
+If default sender creation is not available on a machine, the app automatically retries with compatibility modes.
+
+## Project Structure
+
+- `SpoutText/MainWindow.xaml` - app UI layout and Spout toggle button
+- `SpoutText/MainWindow.xaml.cs` - window logic and view model disposal
+- `SpoutText/UI/ViewModels/MainWindowViewModel.cs` - MVVM state, preview updates, Spout control
+- `SpoutText/Rendering/TextLayerRenderer.cs` - transparent text rendering
+- `SpoutText/Rendering/BitmapConverter.cs` - PBGRA32 to RGBA conversion
+- `SpoutText/Rendering/SpoutOutputManager.cs` - Spout sender lifecycle and frame send
 
 ---
 
-**Happy streaming! 🎥✨**
+For deeper implementation details, see `SPOUT_IMPLEMENTATION.md` and `SPOUT_USAGE_GUIDE.md`.

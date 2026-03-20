@@ -51,13 +51,11 @@ public partial class ColorPickerWindow
         if (_isUpdatingHexInput)
             return;
 
-        if (TryParseRgbHex(HexInput.Text, out var r, out var g, out var b))
-        {
-            RedSlider.Value = r;
-            GreenSlider.Value = g;
-            BlueSlider.Value = b;
-            UpdatePreview();
-        }
+        if (!TryParseRgbHex(HexInput.Text, out byte r, out byte g, out byte b)) return;
+        RedSlider.Value = r;
+        GreenSlider.Value = g;
+        BlueSlider.Value = b;
+        UpdatePreview();
     }
 
     private void OnHexInputLostFocus(object sender, RoutedEventArgs e)

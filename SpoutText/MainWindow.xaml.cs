@@ -13,6 +13,15 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         DataContext = new MainWindowViewModel();
+        Closed += MainWindow_Closed;
+    }
+
+    private void MainWindow_Closed(object? sender, EventArgs e)
+    {
+        if (DataContext is MainWindowViewModel viewModel)
+        {
+            viewModel.Dispose();
+        }
     }
 
     private void OnChooseFillColor(object sender, RoutedEventArgs e)
@@ -20,7 +29,7 @@ public partial class MainWindow : Window
         if (DataContext is not MainWindowViewModel viewModel)
             return;
 
-        ColorPickerWindow dialog = new ColorPickerWindow(viewModel.SelectedFillColor)
+        ColorPickerWindow dialog = new(viewModel.SelectedFillColor)
         {
             Owner = this
         };

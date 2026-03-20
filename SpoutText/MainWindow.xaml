@@ -3,7 +3,6 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:SpoutText"
         xmlns:converters="clr-namespace:SpoutText.UI.Converters"
         mc:Ignorable="d"
         Title="Spout Text Overlay"
@@ -78,7 +77,30 @@
 
         <Border Grid.Column="1" Style="{DynamicResource PanelBorderStyle}" Margin="0,0,10,0">
             <DockPanel LastChildFill="True">
-                <TextBlock DockPanel.Dock="Top" Text="Preview (1920 x 1080)" Style="{DynamicResource PanelTitleStyle}" />
+                <DockPanel DockPanel.Dock="Top" LastChildFill="False">
+                    <TextBlock Text="Preview (1920 x 1080)" 
+                               Style="{DynamicResource PanelTitleStyle}" 
+                               DockPanel.Dock="Left"
+                               VerticalAlignment="Center" />
+                    <Button Command="{Binding ToggleSpoutCommand}" 
+                            DockPanel.Dock="Right"
+                            Padding="12,8"
+                            Margin="0,0,0,12">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource SuccessButtonStyle}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding SpoutEnabled}" Value="True">
+                                        <Setter Property="Background" Value="#d2691e" />
+                                        <Setter Property="Content" Value="⊗ Spout Active" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding SpoutEnabled}" Value="False">
+                                        <Setter Property="Content" Value="⊕ Start Spout" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                </DockPanel>
                 <Viewbox Margin="12"
                          Stretch="Uniform"
                          StretchDirection="DownOnly"

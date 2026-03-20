@@ -8,10 +8,12 @@
         <UseWPF>true</UseWPF>
         <Platform>x64</Platform>
         <Platforms>x64</Platforms>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 
     <ItemGroup>
       <PackageReference Include="JetBrains.Annotations" Version="2025.2.4" />
+      <PackageReference Include="Spout.NETCore" Version="2.7.17" />
     </ItemGroup>
 
 </Project>

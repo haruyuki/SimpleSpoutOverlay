@@ -11,13 +11,16 @@ using SpoutText.Rendering;
 
 namespace SpoutText.UI.ViewModels
 {
-    public sealed class MainWindowViewModel : INotifyPropertyChanged
+    public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     {
         private readonly LayerManager _layerManager;
         private TextLayerRenderer? _renderer;
         private RenderTargetBitmap? _previewBitmap;
         private TextLayer? _selectedLayer;
         private bool _isRenderingPreview;
+        private SpoutOutputManager? _spoutManager;
+        private bool _spoutEnabled;
+        private bool _disposed;
 
         // Selected layer properties
         private string _selectedText = "";
@@ -43,6 +46,8 @@ namespace SpoutText.UI.ViewModels
         public RelayCommand MoveLayerUpCommand { get; }
         [UsedImplicitly]
         public RelayCommand MoveLayerDownCommand { get; }
+        [UsedImplicitly]
+        public RelayCommand ToggleSpoutCommand { get; }
 
         public MainWindowViewModel()
         {
@@ -54,9 +59,11 @@ namespace SpoutText.UI.ViewModels
             DeleteLayerCommand = new RelayCommand(_ => DeleteLayer(), _ => SelectedLayer != null);
             MoveLayerUpCommand = new RelayCommand(_ => MoveLayerUp(), _ => SelectedLayer != null);
             MoveLayerDownCommand = new RelayCommand(_ => MoveLayerDown(), _ => SelectedLayer != null);
+            ToggleSpoutCommand = new RelayCommand(_ => ToggleSpout());
 
             InitializeRenderer();
             InitializePreview();
+            InitializeSpout();
         }
 
         private void InitializeRenderer()
@@ -70,7 +77,34 @@ namespace SpoutText.UI.ViewModels
             OnPropertyChanged(nameof(PreviewBitmap));
         }
 
+        private void InitializeSpout()
+        {
+            try
+            {
+                _spoutManager = new SpoutOutputManager(1920, 1080);
+                _spoutEnabled = false;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Failed to initialize Spout: {ex.Message}");
+                _spoutManager = null;
+            }
+        }
+    
+        [UsedImplicitly]
         public ObservableCollection<TextLayer> Layers => _layerManager.Layers;
+        
+        [UsedImplicitly]
+        public bool SpoutEnabled
+        {
+            get => _spoutEnabled;
+            private set
+            {
+                if (_spoutEnabled == value) return;
+                _spoutEnabled = value;
+                OnPropertyChanged();
+            }
+        }
         
         [UsedImplicitly]
         public TextLayer? SelectedLayer
@@ -246,8 +280,9 @@ namespace SpoutText.UI.ViewModels
                 OnPropertyChanged();
             }
         }
-
-        public IEnumerable<string> AvailableFonts
+        
+        [UsedImplicitly]
+        public static IEnumerable<string> AvailableFonts
         {
             get
             {
@@ -258,7 +293,7 @@ namespace SpoutText.UI.ViewModels
 
         private void AddLayer()
         {
-            TextLayer layer = new TextLayer($"Text {_layerManager.Layers.Count + 1}");
+            TextLayer layer = new($"Text {_layerManager.Layers.Count + 1}");
             _layerManager.AddLayer(layer);
             SelectedLayer = layer;
         }
@@ -340,6 +375,12 @@ namespace SpoutText.UI.ViewModels
             {
                 RenderTargetBitmap bitmap = _renderer.RenderLayers(_layerManager.Layers);
                 PreviewBitmap = bitmap;
+
+                // Send to Spout if enabled
+                if (_spoutEnabled && _spoutManager != null)
+                {
+                    _spoutManager.SendFrame(bitmap);
+                }
             }
             catch (Exception ex)
             {
@@ -348,6 +389,38 @@ namespace SpoutText.UI.ViewModels
             finally
             {
                 _isRenderingPreview = false;
+            }
+        }
+
+        private void ToggleSpout()
+        {
+            if (_spoutManager == null)
+            {
+                return;
+            }
+
+            if (_spoutEnabled)
+            {
+                // Disable Spout
+                _spoutManager.Shutdown();
+                SpoutEnabled = false;
+            }
+            else
+            {
+                // Enable Spout
+                if (_spoutManager.Initialize())
+                {
+                    SpoutEnabled = true;
+                    // Send current frame
+                    if (_previewBitmap != null)
+                    {
+                        _spoutManager.SendFrame(_previewBitmap);
+                    }
+                }
+                else
+                {
+                    Debug.WriteLine("Failed to initialize Spout output");
+                }
             }
         }
 
@@ -364,6 +437,21 @@ namespace SpoutText.UI.ViewModels
         private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        public void Dispose()
+        {
+            if (_disposed)
+                return;
+
+            if (_spoutEnabled && _spoutManager != null)
+            {
+                _spoutManager.Shutdown();
+            }
+
+            _spoutManager?.Dispose();
+            _disposed = true;
+            GC.SuppressFinalize(this);
         }
     }
 
