@@ -1,13 +1,16 @@
 ﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using JetBrains.Annotations;
+using Microsoft.Win32;
 using SpoutText.Models;
 using SpoutText.Rendering;
+using SpoutText.Services;
 
 namespace SpoutText.UI.ViewModels
 {
@@ -21,6 +24,7 @@ namespace SpoutText.UI.ViewModels
         private SpoutOutputManager? _spoutManager;
         private bool _spoutEnabled;
         private bool _disposed;
+        private readonly SessionPersistenceService _sessionPersistenceService;
 
         // Selected layer properties
         private string _selectedText = "";
@@ -48,6 +52,10 @@ namespace SpoutText.UI.ViewModels
         public RelayCommand MoveLayerDownCommand { get; }
         [UsedImplicitly]
         public RelayCommand ToggleSpoutCommand { get; }
+        [UsedImplicitly]
+        public RelayCommand SaveSetupCommand { get; }
+        [UsedImplicitly]
+        public RelayCommand LoadSetupCommand { get; }
 
         public MainWindowViewModel()
         {
@@ -60,10 +68,14 @@ namespace SpoutText.UI.ViewModels
             MoveLayerUpCommand = new RelayCommand(_ => MoveLayerUp(), _ => SelectedLayer != null);
             MoveLayerDownCommand = new RelayCommand(_ => MoveLayerDown(), _ => SelectedLayer != null);
             ToggleSpoutCommand = new RelayCommand(_ => ToggleSpout());
+            SaveSetupCommand = new RelayCommand(_ => ExecuteSaveSetup());
+            LoadSetupCommand = new RelayCommand(_ => ExecuteLoadSetup());
+            _sessionPersistenceService = new SessionPersistenceService();
 
             InitializeRenderer();
             InitializePreview();
             InitializeSpout();
+            TryLoadDefaultSession();
         }
 
         private void InitializeRenderer()
@@ -424,6 +436,169 @@ namespace SpoutText.UI.ViewModels
             }
         }
 
+        private void ExecuteSaveSetup()
+        {
+            SaveFileDialog dialog = new()
+            {
+                Filter = "SpoutText Session (*.json)|*.json|All Files (*.*)|*.*",
+                DefaultExt = ".json",
+                AddExtension = true,
+                FileName = "spouttext-session.json",
+                InitialDirectory = Path.GetDirectoryName(_sessionPersistenceService.DefaultSessionPath)
+            };
+
+            if (dialog.ShowDialog() != true) return;
+            try
+            {
+                SessionPersistenceService.SaveToPath(dialog.FileName, CaptureSessionState());
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Failed to save session file: {ex.Message}");
+            }
+        }
+
+        private void ExecuteLoadSetup()
+        {
+            OpenFileDialog dialog = new()
+            {
+                Filter = "SpoutText Session (*.json)|*.json|All Files (*.*)|*.*",
+                DefaultExt = ".json",
+                CheckFileExists = true,
+                InitialDirectory = Path.GetDirectoryName(_sessionPersistenceService.DefaultSessionPath)
+            };
+
+            if (dialog.ShowDialog() != true) return;
+            try
+            {
+                SessionState? state = SessionPersistenceService.LoadFromPath(dialog.FileName);
+                if (state != null)
+                {
+                    RestoreSessionState(state);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Failed to load session file: {ex.Message}");
+            }
+        }
+
+        private void TryLoadDefaultSession()
+        {
+            try
+            {
+                SessionState? state = SessionPersistenceService.LoadFromPath(_sessionPersistenceService.DefaultSessionPath);
+                if (state != null)
+                {
+                    RestoreSessionState(state);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Failed to load default session: {ex.Message}");
+            }
+        }
+
+        public void SaveDefaultSession()
+        {
+            try
+            {
+                SessionPersistenceService.SaveToPath(_sessionPersistenceService.DefaultSessionPath, CaptureSessionState());
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Failed to save default session: {ex.Message}");
+            }
+        }
+
+        private SessionState CaptureSessionState()
+        {
+            int selectedIndex = SelectedLayer == null ? -1 : _layerManager.Layers.IndexOf(SelectedLayer);
+
+            return new SessionState
+            {
+                Version = SessionState.CurrentVersion,
+                SelectedLayerIndex = selectedIndex,
+                Layers = _layerManager.Layers.Select(ToTextLayerState).ToList()
+            };
+        }
+
+        private void RestoreSessionState(SessionState state)
+        {
+            _layerManager.Layers.Clear();
+
+            foreach (TextLayerState layerState in state.Layers)
+            {
+                _layerManager.Layers.Add(FromTextLayerState(layerState));
+            }
+
+            if (_layerManager.Layers.Count == 0)
+            {
+                SelectedLayer = null;
+            }
+            else if (state.SelectedLayerIndex >= 0 && state.SelectedLayerIndex < _layerManager.Layers.Count)
+            {
+                SelectedLayer = _layerManager.Layers[state.SelectedLayerIndex];
+            }
+            else
+            {
+                SelectedLayer = _layerManager.Layers[0];
+            }
+
+            RefreshPreview();
+        }
+
+        private static TextLayerState ToTextLayerState(TextLayer layer)
+        {
+            return new TextLayerState
+            {
+                Text = layer.Text,
+                FontFamily = layer.FontFamily,
+                FontSize = layer.FontSize,
+                FillColor = ToArgbHex(layer.FillColor),
+                PositionX = layer.PositionX,
+                PositionY = layer.PositionY,
+                ScaleX = layer.ScaleX,
+                ScaleY = layer.ScaleY,
+                OutlineEnabled = layer.OutlineEnabled,
+                OutlineColor = ToArgbHex(layer.OutlineColor),
+                OutlineThickness = layer.OutlineThickness
+            };
+        }
+
+        private static TextLayer FromTextLayerState(TextLayerState state)
+        {
+            return new TextLayer(state.Text, state.FontFamily, state.FontSize)
+            {
+                FillColor = ParseColor(state.FillColor, Colors.White),
+                PositionX = state.PositionX,
+                PositionY = state.PositionY,
+                ScaleX = state.ScaleX,
+                ScaleY = state.ScaleY,
+                OutlineEnabled = state.OutlineEnabled,
+                OutlineColor = ParseColor(state.OutlineColor, Colors.Black),
+                OutlineThickness = state.OutlineThickness
+            };
+        }
+
+        private static Color ParseColor(string value, Color fallback)
+        {
+            try
+            {
+                object? converted = ColorConverter.ConvertFromString(value);
+                return converted is Color color ? color : fallback;
+            }
+            catch
+            {
+                return fallback;
+            }
+        }
+
+        private static string ToArgbHex(Color color)
+        {
+            return $"#{color.A:X2}{color.R:X2}{color.G:X2}{color.B:X2}";
+        }
+
         private void OnLayersChanged()
         {
             RefreshPreview();
@@ -443,6 +618,8 @@ namespace SpoutText.UI.ViewModels
         {
             if (_disposed)
                 return;
+
+            SaveDefaultSession();
 
             if (_spoutEnabled && _spoutManager != null)
             {

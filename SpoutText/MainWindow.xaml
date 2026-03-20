@@ -49,6 +49,8 @@
 
                 <StackPanel Grid.Row="2" Margin="12,0,12,12">
                     <Button Command="{Binding AddLayerCommand}" Content="Add Layer" Margin="0,0,0,8" />
+                    <Button Command="{Binding SaveSetupCommand}" Content="Save Setup" Margin="0,0,0,8" />
+                    <Button Command="{Binding LoadSetupCommand}" Content="Load Setup" Margin="0,0,0,8" />
                     <Button Command="{Binding DeleteLayerCommand}"
                             Content="Delete Layer"
                             Style="{DynamicResource DangerButtonStyle}"
