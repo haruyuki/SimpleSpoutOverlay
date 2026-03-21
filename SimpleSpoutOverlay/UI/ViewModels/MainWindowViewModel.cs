@@ -7,7 +7,6 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
-using JetBrains.Annotations;
 using Microsoft.Win32;
 using SimpleSpoutOverlay.Models;
 using SimpleSpoutOverlay.Rendering;
@@ -63,27 +62,16 @@ namespace SimpleSpoutOverlay.UI.ViewModels
         public event PropertyChangedEventHandler? PropertyChanged;
 
         // Commands
-        [UsedImplicitly]
         public RelayCommand AddLayerCommand { get; }
-        [UsedImplicitly]
         public RelayCommand AddImageLayerCommand { get; }
-        [UsedImplicitly]
         public RelayCommand ReplaceImageCommand { get; }
-        [UsedImplicitly]
         public RelayCommand DeleteLayerCommand { get; }
-        [UsedImplicitly]
         public RelayCommand MoveLayerUpCommand { get; }
-        [UsedImplicitly]
         public RelayCommand MoveLayerDownCommand { get; }
-        [UsedImplicitly]
         public RelayCommand ToggleSpoutCommand { get; }
-        [UsedImplicitly]
         public RelayCommand UndoCommand { get; }
-        [UsedImplicitly]
         public RelayCommand RedoCommand { get; }
-        [UsedImplicitly]
         public RelayCommand SaveSetupCommand { get; }
-        [UsedImplicitly]
         public RelayCommand LoadSetupCommand { get; }
 
         public MainWindowViewModel()
@@ -140,11 +128,9 @@ namespace SimpleSpoutOverlay.UI.ViewModels
                 _spoutManager = null;
             }
         }
-
-        [UsedImplicitly]
+        
         public ObservableCollection<LayerBase> Layers => _layerManager.Layers;
-
-        [UsedImplicitly]
+        
         public bool SpoutEnabled
         {
             get => _spoutEnabled;
@@ -155,8 +141,7 @@ namespace SimpleSpoutOverlay.UI.ViewModels
                 OnPropertyChanged();
             }
         }
-
-        [UsedImplicitly]
+        
         public string ToastMessage
         {
             get => _toastMessage;
@@ -167,8 +152,7 @@ namespace SimpleSpoutOverlay.UI.ViewModels
                 OnPropertyChanged();
             }
         }
-
-        [UsedImplicitly]
+        
         public bool IsToastVisible
         {
             get => _isToastVisible;
@@ -179,8 +163,7 @@ namespace SimpleSpoutOverlay.UI.ViewModels
                 OnPropertyChanged();
             }
         }
-
-        [UsedImplicitly]
+        
         public bool ToastIsError
         {
             get => _toastIsError;
@@ -191,8 +174,7 @@ namespace SimpleSpoutOverlay.UI.ViewModels
                 OnPropertyChanged();
             }
         }
-
-        [UsedImplicitly]
+        
         public LayerBase? SelectedLayer
         {
             get => _selectedLayer;
@@ -212,11 +194,9 @@ namespace SimpleSpoutOverlay.UI.ViewModels
                 CommandManager.InvalidateRequerySuggested();
             }
         }
-
-        [UsedImplicitly]
+        
         public bool IsTextLayerSelected => _selectedLayer is TextLayer;
-
-        [UsedImplicitly]
+        
         public bool IsImageLayerSelected => _selectedLayer is ImageLayer;
 
         #region Selected Layer Properties
@@ -407,14 +387,11 @@ namespace SimpleSpoutOverlay.UI.ViewModels
                 OnPropertyChanged();
             }
         }
-
-        [UsedImplicitly]
+        
         public bool CanUndo => _undoStack.Count > 0;
-
-        [UsedImplicitly]
+        
         public bool CanRedo => _redoStack.Count > 0;
-
-        [UsedImplicitly]
+        
         public static IEnumerable<string> AvailableFonts
         {
             get
