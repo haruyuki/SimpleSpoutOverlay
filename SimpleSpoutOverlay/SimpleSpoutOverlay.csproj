@@ -10,6 +10,7 @@
         <Platforms>x64</Platforms>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <ApplicationIcon>SimpleSpoutOverlay.ico</ApplicationIcon>
+        <MSBuildWarningsAsMessages>$(MSBuildWarningsAsMessages);MSB3246</MSBuildWarningsAsMessages>
     </PropertyGroup>
 
     <ItemGroup>
