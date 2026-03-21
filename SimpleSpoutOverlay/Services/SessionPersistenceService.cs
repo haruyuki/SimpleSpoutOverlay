@@ -22,6 +22,15 @@ public sealed class SessionPersistenceService
         }
     }
 
+    private static string LastSavedSetupPathFile
+    {
+        get
+        {
+            string appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            return Path.Combine(appData, "SimpleSpoutOverlay", "last-saved-setup-path.txt");
+        }
+    }
+
     public static SessionState? LoadFromPath(string path)
     {
         if (!File.Exists(path))
@@ -45,6 +54,34 @@ public sealed class SessionPersistenceService
 
         string json = JsonSerializer.Serialize(state, JsonOptions);
         File.WriteAllText(path, json);
+    }
+
+    public static void SaveLastSetupPath(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return;
+        }
+
+        string fullPath = Path.GetFullPath(path);
+        string? directory = Path.GetDirectoryName(LastSavedSetupPathFile);
+        if (!string.IsNullOrWhiteSpace(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
+
+        File.WriteAllText(LastSavedSetupPathFile, fullPath);
+    }
+
+    public static string? LoadLastSetupPath()
+    {
+        if (!File.Exists(LastSavedSetupPathFile))
+        {
+            return null;
+        }
+
+        string value = File.ReadAllText(LastSavedSetupPathFile).Trim();
+        return string.IsNullOrWhiteSpace(value) ? null : value;
     }
 }
 

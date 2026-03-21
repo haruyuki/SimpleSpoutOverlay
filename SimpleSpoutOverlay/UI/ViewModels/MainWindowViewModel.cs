@@ -853,19 +853,22 @@ namespace SimpleSpoutOverlay.UI.ViewModels
 
         private void ExecuteSaveSetup()
         {
+            string defaultFileName = $"simplespoutoverlay-{DateTime.Now:yyyyMMdd-HHmmss}.json";
+
             SaveFileDialog dialog = new()
             {
                 Filter = "SimpleSpoutOverlay Session (*.json)|*.json|All Files (*.*)|*.*",
                 DefaultExt = ".json",
                 AddExtension = true,
-                FileName = "simplespoutoverlay-session.json",
-                InitialDirectory = Path.GetDirectoryName(SessionPersistenceService.DefaultSessionPath)
+                FileName = defaultFileName,
+                InitialDirectory = ResolveSetupInitialDirectory()
             };
 
             if (dialog.ShowDialog() != true) return;
             try
             {
                 SessionPersistenceService.SaveToPath(dialog.FileName, CaptureSessionState());
+                SessionPersistenceService.SaveLastSetupPath(dialog.FileName);
                 ShowToast($"Setup saved: {Path.GetFileName(dialog.FileName)}");
             }
             catch (Exception ex)
@@ -875,6 +878,29 @@ namespace SimpleSpoutOverlay.UI.ViewModels
             }
         }
 
+        private static string ResolveSetupInitialDirectory()
+        {
+            string? lastSavedPath = SessionPersistenceService.LoadLastSetupPath();
+            if (string.IsNullOrWhiteSpace(lastSavedPath))
+                return Path.GetDirectoryName(SessionPersistenceService.DefaultSessionPath)
+                       ?? Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+            try
+            {
+                string candidateDirectory = Path.GetDirectoryName(Path.GetFullPath(lastSavedPath)) ?? string.Empty;
+                if (!string.IsNullOrWhiteSpace(candidateDirectory) && Directory.Exists(candidateDirectory))
+                {
+                    return candidateDirectory;
+                }
+            }
+            catch
+            {
+                // Ignore invalid persisted path and fall back to the default directory.
+            }
+
+            return Path.GetDirectoryName(SessionPersistenceService.DefaultSessionPath)
+                   ?? Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+        }
+
         private void ExecuteLoadSetup()
         {
             OpenFileDialog dialog = new()
@@ -882,7 +908,7 @@ namespace SimpleSpoutOverlay.UI.ViewModels
                 Filter = "SimpleSpoutOverlay Session (*.json)|*.json|All Files (*.*)|*.*",
                 DefaultExt = ".json",
                 CheckFileExists = true,
-                InitialDirectory = Path.GetDirectoryName(SessionPersistenceService.DefaultSessionPath)
+                InitialDirectory = ResolveSetupInitialDirectory()
             };
 
             if (dialog.ShowDialog() != true) return;
@@ -893,6 +919,7 @@ namespace SimpleSpoutOverlay.UI.ViewModels
                 {
                     PushUndoSnapshot();
                     RestoreSessionState(state);
+                    SessionPersistenceService.SaveLastSetupPath(dialog.FileName);
                     ShowToast($"Setup loaded: {Path.GetFileName(dialog.FileName)}");
                 }
                 else
