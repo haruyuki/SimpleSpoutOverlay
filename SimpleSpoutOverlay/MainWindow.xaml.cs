@@ -14,6 +14,10 @@ namespace SimpleSpoutOverlay;
 /// Interaction logic for MainWindow.xaml
 public partial class MainWindow
 {
+    private const double PreviewWidth = 1920;
+    private const double PreviewHeight = 1080;
+    private const double SnapThreshold = 12;
+
     private Point _dragStartPoint;
     private InsertionAdorner? _insertionAdorner;
     private ListBoxItem? _dropTargetItem;
@@ -111,8 +115,16 @@ public partial class MainWindow
         if (_isPreviewDragging && _previewDraggedLayer != null)
         {
             Vector delta = point - _previewDragStartPoint;
-            viewModel.SelectedPositionX = _previewLayerStartX + delta.X;
-            viewModel.SelectedPositionY = _previewLayerStartY + delta.Y;
+            double targetX = _previewLayerStartX + delta.X;
+            double targetY = _previewLayerStartY + delta.Y;
+
+            if (viewModel.IsSnappingEnabled)
+            {
+                (targetX, targetY) = GetSnappedPosition(_previewDraggedLayer, targetX, targetY);
+            }
+
+            viewModel.SelectedPositionX = targetX;
+            viewModel.SelectedPositionY = targetY;
             ShowPreviewLayerOutline(_previewDraggedLayer, isDragging: true);
             e.Handled = true;
             return;
@@ -267,7 +279,71 @@ public partial class MainWindow
 
     private static bool IsPointInsidePreviewSurface(Point point)
     {
-        return point is { X: >= 0 and <= 1920, Y: >= 0 and <= 1080 };
+        return point is { X: >= 0 and <= PreviewWidth, Y: >= 0 and <= PreviewHeight };
+    }
+
+    private static (double X, double Y) GetSnappedPosition(LayerBase layer, double targetX, double targetY)
+    {
+        Rect bounds = GetLayerBoundsAtPosition(layer, targetX, targetY);
+        if (bounds.IsEmpty)
+        {
+            return (targetX, targetY);
+        }
+
+        double snappedX = targetX + GetBestSnapOffset(bounds.Left, bounds.Left + (bounds.Width / 2.0), bounds.Right,
+            0, PreviewWidth / 2.0, PreviewWidth);
+        double snappedY = targetY + GetBestSnapOffset(bounds.Top, bounds.Top + (bounds.Height / 2.0), bounds.Bottom,
+            0, PreviewHeight / 2.0, PreviewHeight);
+
+        return (snappedX, snappedY);
+    }
+
+    private static Rect GetLayerBoundsAtPosition(LayerBase layer, double targetX, double targetY)
+    {
+        Rect bounds = layer switch
+        {
+            TextLayer textLayer => GetTextLayerBounds(textLayer),
+            ImageLayer imageLayer => GetImageLayerBounds(imageLayer),
+            _ => Rect.Empty
+        };
+
+        if (bounds.IsEmpty)
+        {
+            return Rect.Empty;
+        }
+
+        bounds.Offset(targetX - layer.PositionX, targetY - layer.PositionY);
+        return bounds;
+    }
+
+    private static double GetBestSnapOffset(
+        double movingStart,
+        double movingCenter,
+        double movingEnd,
+        double targetStart,
+        double targetCenter,
+        double targetEnd)
+    {
+        double bestOffset = 0;
+        double bestDistance = SnapThreshold + 1;
+
+        TryCaptureBest(targetStart - movingStart);
+        TryCaptureBest(targetCenter - movingCenter);
+        TryCaptureBest(targetEnd - movingEnd);
+
+        return bestOffset;
+
+        void TryCaptureBest(double candidate)
+        {
+            double distance = Math.Abs(candidate);
+            if (distance > SnapThreshold || distance >= bestDistance)
+            {
+                return;
+            }
+
+            bestOffset = candidate;
+            bestDistance = distance;
+        }
     }
 
     private static Geometry? GetLayerGeometry(LayerBase layer)

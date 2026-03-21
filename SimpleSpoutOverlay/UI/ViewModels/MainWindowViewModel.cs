@@ -37,6 +37,7 @@ namespace SimpleSpoutOverlay.UI.ViewModels
         private string _toastMessage = string.Empty;
         private bool _isToastVisible;
         private bool _toastIsError;
+        private bool _isSnappingEnabled = true;
 
         private const double MinFontSize = 8;
         private const double MaxFontSize = 200;
@@ -202,6 +203,17 @@ namespace SimpleSpoutOverlay.UI.ViewModels
         public bool IsTextLayerSelected => _selectedLayer is TextLayer;
         
         public bool IsImageLayerSelected => _selectedLayer is ImageLayer;
+
+        public bool IsSnappingEnabled
+        {
+            get => _isSnappingEnabled;
+            set
+            {
+                if (_isSnappingEnabled == value) return;
+                _isSnappingEnabled = value;
+                OnPropertyChanged();
+            }
+        }
 
         #region Selected Layer Properties
 
@@ -763,6 +775,7 @@ namespace SimpleSpoutOverlay.UI.ViewModels
             {
                 Version = source.Version,
                 SelectedLayerIndex = source.SelectedLayerIndex,
+                IsSnappingEnabled = source.IsSnappingEnabled,
                 Layers = source.Layers
                     .Select(layer => new LayerState
                     {
@@ -787,6 +800,11 @@ namespace SimpleSpoutOverlay.UI.ViewModels
         private static bool AreSessionStatesEquivalent(SessionState left, SessionState right)
         {
             if (left.SelectedLayerIndex != right.SelectedLayerIndex || left.Layers.Count != right.Layers.Count)
+            {
+                return false;
+            }
+
+            if (left.IsSnappingEnabled != right.IsSnappingEnabled)
             {
                 return false;
             }
@@ -1005,6 +1023,7 @@ namespace SimpleSpoutOverlay.UI.ViewModels
             {
                 Version = SessionState.CurrentVersion,
                 SelectedLayerIndex = selectedIndex,
+                IsSnappingEnabled = _isSnappingEnabled,
                 Layers = _layerManager.Layers.Select(ToLayerState).ToList()
             };
         }
@@ -1015,6 +1034,7 @@ namespace SimpleSpoutOverlay.UI.ViewModels
             _suppressHistory = true;
             try
             {
+                _isSnappingEnabled = state.IsSnappingEnabled;
                 _layerManager.Layers.Clear();
 
                 foreach (LayerState layerState in state.Layers)
@@ -1047,6 +1067,7 @@ namespace SimpleSpoutOverlay.UI.ViewModels
             }
 
             NotifyHistoryStateChanged();
+            OnPropertyChanged(nameof(IsSnappingEnabled));
 
             RefreshPreview();
         }

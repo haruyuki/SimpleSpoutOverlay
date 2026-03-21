@@ -3,13 +3,15 @@
 /// Serializable application state for restoring the previous editing session.
 public sealed class SessionState
 {
-    public const int CurrentVersion = 2;
+    public const int CurrentVersion = 1;
 
     public int Version { get; init; } = CurrentVersion;
 
     public List<LayerState> Layers { get; init; } = [];
 
     public int SelectedLayerIndex { get; init; } = -1;
+
+    public bool IsSnappingEnabled { get; init; } = true;
 }
 
 /// Serializable layer data used in session files.
