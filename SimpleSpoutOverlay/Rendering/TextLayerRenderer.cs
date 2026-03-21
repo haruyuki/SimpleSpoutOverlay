@@ -19,7 +19,7 @@ namespace SimpleSpoutOverlay.Rendering
             public DateTime LastWriteTimeUtc { get; } = lastWriteTimeUtc;
             public long Length { get; } = length;
         }
-        
+
         /// Renders all layers to a bitmap with transparent background.
         /// Renders in reverse order so the first item in the list appears on top visually.
         public RenderTargetBitmap RenderLayers(IEnumerable<LayerBase> layers)
