@@ -1,20 +1,56 @@
-﻿# Simple Spout Overlay
+﻿<p align="center">
+  <img src="icon.png" alt="Simple Spout Overlay icon" />
+</p>
 
-Simple SpoutOverlay is a WPF desktop app for building transparent text overlays and sending them directly to Spout.
+# Simple Spout Overlay
 
-The editor preview and Spout output use the same alpha-safe render pipeline, so what you see in the canvas is what gets sent.
+Simple Spout Overlay is a Windows desktop app for building transparent overlays and sending them directly to Spout in real time.
 
-## Features
+<p align="center">
+  <img src="screenshot.png" alt="Simple Spout Overlay main window" />
+</p>
 
-- Multi-layer text workflow (add, delete, move up/down, drag-and-drop reorder)
-- Per-layer controls: text, font family, size, fill color, outline toggle/color/thickness, position, and scale
-- Live `1920x1080` preview with transparent background
-- Undo/redo history for layer operations and property changes
-- Slider gesture-aware undo (one drag action = one undo step)
-- Save/load setup as JSON session files
-- Auto-load default session on startup and auto-save on app close
-- Spout sender output with start/stop toggle
-- Spout sender fallback initialization for better compatibility across machines
+## What You Can Do
+
+- Build overlays with both **text layers** and **image layers**
+- See a live `1920x1080` preview that matches the Spout output
+- Drag layers directly in the preview to position them visually
+- Use optional edge/center **snapping** while dragging for cleaner alignment
+- Reorder layers with drag-and-drop, or `Move Up` / `Move Down`
+- Edit per-layer properties (text, font, colors, outline, position, scale, image source)
+- Undo/redo layer edits, including slider changes as a single undo step per drag
+- Save and load setups as JSON files
+- Auto-load your last default session on startup and auto-save on close
+
+## Quick Start
+
+### Recommended: Download from GitHub Releases
+
+The easiest way to get started is to download the latest version from [Releases](https://github.com/haruyuki/SimpleSpoutOverlay/releases).
+
+### Alternative: Build from source
+
+Requirements:
+
+- Windows 10/11 x64
+- .NET 8 SDK
+
+From the repository root:
+
+```powershell
+dotnet restore
+dotnet build .\SimpleSpoutOverlay\SimpleSpoutOverlay.csproj -c Release
+```
+
+Release binaries will be generated under:
+
+`SimpleSpoutOverlay\bin\Release\net8.0-windows\`
+
+Optional: run directly from source during development:
+
+```powershell
+dotnet run --project .\SimpleSpoutOverlay\SimpleSpoutOverlay.csproj -c Release
+```
 
 ## Keyboard Shortcuts
 
@@ -22,39 +58,19 @@ The editor preview and Spout output use the same alpha-safe render pipeline, so 
 - `Ctrl+Y` - Redo
 - `Ctrl+S` - Save setup
 - `Ctrl+O` - Load setup
-- `Ctrl+N` - Add layer
+- `Ctrl+N` - Add text layer
 - `Ctrl+Delete` - Delete selected layer
-- `Ctrl+Up` - Move selected layer up (when focus is in the layer list)
-- `Ctrl+Down` - Move selected layer down (when focus is in the layer list)
+- `Ctrl+Up` - Move selected layer up (when the layer list is focused)
+- `Ctrl+Down` - Move selected layer down (when the layer list is focused)
 
-## Requirements
+## Setup Files and Persistence
 
-- Windows 10/11 x64
-- .NET 8 SDK
+- Save/load setup files manually with the Session buttons (`.json`).
+- Default auto-save session path: `%AppData%\SimpleSpoutOverlay\session.json`
+- The app also remembers your last manual setup folder for faster save/load dialogs.
 
-## Build
+## Spout Notes
 
-```powershell
-dotnet restore
-dotnet build -c Debug
-```
-
-## Run
-
-```powershell
-dotnet run --project .\SimpleSpoutOverlay\SimpleSpoutOverlay.csproj
-```
-
-## Session Files
-
-- Manual save/load uses JSON setup files via the Session buttons or shortcuts.
-- Default session path: `%AppData%\SimpleSpoutOverlay\session.json`.
-- Setup files store layers and selection state.
-
-## Using Spout Output
-
-1. Launch the app.
-2. Create or edit one or more text layers.
-3. Click `Start Spout` in the top Session/Spout bar.
-4. In your receiver app, select sender name `SimpleSpoutOverlay`.
+- The top-right button changes state between `Start Spout` and `Spout Active`.
+- If your receiver does not see the stream, restart Spout from the app and reselect `SimpleSpoutOverlay` in the receiver.
 
