@@ -859,7 +859,7 @@ namespace SimpleSpoutOverlay.UI.ViewModels
                 DefaultExt = ".json",
                 AddExtension = true,
                 FileName = "simplespoutoverlay-session.json",
-                InitialDirectory = Path.GetDirectoryName(_sessionPersistenceService.DefaultSessionPath)
+                InitialDirectory = Path.GetDirectoryName(SessionPersistenceService.DefaultSessionPath)
             };
 
             if (dialog.ShowDialog() != true) return;
@@ -882,7 +882,7 @@ namespace SimpleSpoutOverlay.UI.ViewModels
                 Filter = "SimpleSpoutOverlay Session (*.json)|*.json|All Files (*.*)|*.*",
                 DefaultExt = ".json",
                 CheckFileExists = true,
-                InitialDirectory = Path.GetDirectoryName(_sessionPersistenceService.DefaultSessionPath)
+                InitialDirectory = Path.GetDirectoryName(SessionPersistenceService.DefaultSessionPath)
             };
 
             if (dialog.ShowDialog() != true) return;
@@ -911,7 +911,7 @@ namespace SimpleSpoutOverlay.UI.ViewModels
         {
             try
             {
-                SessionState? state = SessionPersistenceService.LoadFromPath(_sessionPersistenceService.DefaultSessionPath);
+                SessionState? state = SessionPersistenceService.LoadFromPath(SessionPersistenceService.DefaultSessionPath);
                 if (state != null)
                 {
                     RestoreSessionState(state, clearHistory: true);
@@ -943,7 +943,7 @@ namespace SimpleSpoutOverlay.UI.ViewModels
         {
             try
             {
-                SessionPersistenceService.SaveToPath(_sessionPersistenceService.DefaultSessionPath, CaptureSessionState());
+                SessionPersistenceService.SaveToPath(SessionPersistenceService.DefaultSessionPath, CaptureSessionState());
             }
             catch (Exception ex)
             {

@@ -5,10 +5,8 @@ using Spout.NETCore;
 
 namespace SimpleSpoutOverlay.Rendering
 {
-    /// <summary>
     /// Manages Spout2 output for text layer rendering.
     /// Sends rendered frames to Spout for external application consumption.
-    /// </summary>
     public sealed class SpoutOutputManager(int width, int height) : IDisposable
     {
         private SpoutSender? _sender;
@@ -16,11 +14,9 @@ namespace SimpleSpoutOverlay.Rendering
         private bool _disposed;
         private byte[]? _bgraBuffer;
         private byte[]? _rgbaBuffer;
-
-        /// <summary>
+        
         /// Initializes the Spout sender with the specified name.
         /// Must be called before SendFrame.
-        /// </summary>
         public bool Initialize(string senderName = "SimpleSpoutOverlay")
         {
             if (_isInitialized)
@@ -70,11 +66,9 @@ namespace SimpleSpoutOverlay.Rendering
                 return false;
             }
         }
-
-        /// <summary>
+        
         /// Sends a rendered frame to Spout.
         /// Converts the WPF RenderTargetBitmap to RGBA format and sends it.
-        /// </summary>
         public void SendFrame(RenderTargetBitmap bitmap)
         {
             if (!_isInitialized || _sender == null)
@@ -132,10 +126,8 @@ namespace SimpleSpoutOverlay.Rendering
                 _rgbaBuffer = new byte[rgbaLength];
             }
         }
-
-        /// <summary>
+        
         /// Releases the Spout sender resources.
-        /// </summary>
         public void Shutdown()
         {
             if (_sender == null)

@@ -6,11 +6,9 @@ using System.Windows.Threading;
 
 namespace SimpleSpoutOverlay.UI.Behaviors
 {
-    /// <summary>
     /// Attached behavior that wires numeric textbox interactions:
     /// - Select all text on focus
     /// - Commit binding on Enter key
-    /// </summary>
     public static class NumericEditorBehavior
     {
         public static bool GetIsEnabled(DependencyObject obj)

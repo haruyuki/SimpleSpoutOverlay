@@ -2,15 +2,11 @@
 
 namespace SimpleSpoutOverlay.Rendering
 {
-    /// <summary>
     /// Converts WPF RenderTargetBitmap to byte array format suitable for Spout output.
     /// Handles PBGRA32 format conversion to RGBA byte array.
-    /// </summary>
     public static class BitmapConverter
     {
-        /// <summary>
         /// Converts a RenderTargetBitmap to RGBA using caller-provided buffers to avoid per-frame allocations.
-        /// </summary>
         public static void BitmapToRgbaArray(RenderTargetBitmap bitmap, byte[] bgraBuffer, byte[] rgbaBuffer)
         {
             int width = bitmap.PixelWidth;

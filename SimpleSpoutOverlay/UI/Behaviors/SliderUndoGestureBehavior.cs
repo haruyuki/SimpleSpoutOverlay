@@ -5,10 +5,8 @@ using SimpleSpoutOverlay.UI.ViewModels;
 
 namespace SimpleSpoutOverlay.UI.Behaviors
 {
-    /// <summary>
     /// Attached behavior that wires slider drag start/complete events to undo gesture lifecycle
     /// on the MainWindowViewModel.
-    /// </summary>
     public static class SliderUndoGestureBehavior
     {
         public static bool GetIsEnabled(DependencyObject obj)

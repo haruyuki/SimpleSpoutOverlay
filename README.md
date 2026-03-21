@@ -1,6 +1,6 @@
-﻿# SpoutText
+﻿# Simple Spout Overlay
 
-SpoutText is a WPF desktop app for building transparent text overlays and sending them directly to Spout.
+Simple SpoutOverlay is a WPF desktop app for building transparent text overlays and sending them directly to Spout.
 
 The editor preview and Spout output use the same alpha-safe render pipeline, so what you see in the canvas is what gets sent.
 
@@ -35,7 +35,6 @@ The editor preview and Spout output use the same alpha-safe render pipeline, so 
 ## Build
 
 ```powershell
-cd C:\Users\Haru\RiderProjects\SpoutText
 dotnet restore
 dotnet build -c Debug
 ```
@@ -43,14 +42,13 @@ dotnet build -c Debug
 ## Run
 
 ```powershell
-cd C:\Users\Haru\RiderProjects\SpoutText
-dotnet run --project .\SpoutText\SpoutText.csproj
+dotnet run --project .\SimpleSpoutOverlay\SimpleSpoutOverlay.csproj
 ```
 
 ## Session Files
 
 - Manual save/load uses JSON setup files via the Session buttons or shortcuts.
-- Default session path: `%AppData%\SpoutText\session.json`.
+- Default session path: `%AppData%\SimpleSpoutOverlay\session.json`.
 - Setup files store layers and selection state.
 
 ## Using Spout Output
@@ -58,8 +56,5 @@ dotnet run --project .\SpoutText\SpoutText.csproj
 1. Launch the app.
 2. Create or edit one or more text layers.
 3. Click `Start Spout` in the top Session/Spout bar.
-4. In your receiver app, select sender name `SpoutText`.
+4. In your receiver app, select sender name `SimpleSpoutOverlay`.
 
-## Setup Notes
-
-For environment and dependency setup details, see `SETUP.md`.

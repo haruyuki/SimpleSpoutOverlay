@@ -4,9 +4,7 @@ using SimpleSpoutOverlay.Models;
 
 namespace SimpleSpoutOverlay.Services;
 
-/// <summary>
 /// Handles saving and loading session files from disk.
-/// </summary>
 public sealed class SessionPersistenceService
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -15,7 +13,7 @@ public sealed class SessionPersistenceService
         PropertyNameCaseInsensitive = true
     };
 
-    public string DefaultSessionPath
+    public static string DefaultSessionPath
     {
         get
         {
