@@ -5,8 +5,22 @@ namespace SimpleSpoutOverlay.Models
     /// Represents a single text layer with formatting, color, position, and outline properties.
     public sealed class TextLayer(string text, string fontFamily = "Arial", double fontSize = 48) : LayerBase
     {
+        private string _text = text;
+
         // Text properties
-        public string Text { get; set; } = text;
+        public string Text
+        {
+            get => _text;
+            set
+            {
+                if (!SetProperty(ref _text, value))
+                {
+                    return;
+                }
+
+                OnPropertyChanged(nameof(DisplayName));
+            }
+        }
 
         protected override string LayerType => "Text";
 
