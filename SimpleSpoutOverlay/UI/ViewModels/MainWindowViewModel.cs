@@ -21,6 +21,8 @@ namespace SimpleSpoutOverlay.UI.ViewModels
         private RenderTargetBitmap? _previewBitmap;
         private LayerBase? _selectedLayer;
         private bool _isRenderingPreview;
+        private bool _isPreviewRefreshQueued;
+        private bool _previewRefreshPending;
         private SpoutOutputManager? _spoutManager;
         private bool _spoutEnabled;
         private bool _disposed;
@@ -31,6 +33,7 @@ namespace SimpleSpoutOverlay.UI.ViewModels
         private bool _isSliderUndoGestureActive;
         private SessionState? _sliderUndoSnapshot;
         private readonly DispatcherTimer _toastTimer;
+        private readonly Dispatcher _uiDispatcher;
         private string _toastMessage = string.Empty;
         private bool _isToastVisible;
         private bool _toastIsError;
@@ -76,6 +79,7 @@ namespace SimpleSpoutOverlay.UI.ViewModels
 
         public MainWindowViewModel()
         {
+            _uiDispatcher = Dispatcher.CurrentDispatcher;
             _layerManager = new LayerManager();
             _layerManager.LayersChanged += OnLayersChanged;
             _layerManager.SelectionChanged += OnSelectionChanged;
@@ -591,9 +595,42 @@ namespace SimpleSpoutOverlay.UI.ViewModels
 
         private void RefreshPreview()
         {
-            if (_isRenderingPreview || _renderer == null)
+            if (_renderer == null || _disposed)
+            {
                 return;
+            }
 
+            _previewRefreshPending = true;
+            QueuePreviewRefresh();
+        }
+
+        private void QueuePreviewRefresh()
+        {
+            if (_isPreviewRefreshQueued)
+            {
+                return;
+            }
+
+            _isPreviewRefreshQueued = true;
+            _uiDispatcher.BeginInvoke(DispatcherPriority.Render, new Action(ProcessQueuedPreviewRefresh));
+        }
+
+        private void ProcessQueuedPreviewRefresh()
+        {
+            _isPreviewRefreshQueued = false;
+
+            if (!_previewRefreshPending || _renderer == null || _disposed)
+            {
+                return;
+            }
+
+            if (_isRenderingPreview)
+            {
+                QueuePreviewRefresh();
+                return;
+            }
+
+            _previewRefreshPending = false;
             _isRenderingPreview = true;
             try
             {
@@ -613,6 +650,11 @@ namespace SimpleSpoutOverlay.UI.ViewModels
             finally
             {
                 _isRenderingPreview = false;
+            }
+
+            if (_previewRefreshPending)
+            {
+                QueuePreviewRefresh();
             }
         }
 
