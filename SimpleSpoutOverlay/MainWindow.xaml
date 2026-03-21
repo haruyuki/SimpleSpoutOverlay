@@ -207,11 +207,27 @@
                          VerticalAlignment="Center">
                     <Border Width="1920"
                             Height="1080"
+                            x:Name="PreviewSurface"
                             BorderBrush="{DynamicResource Brush.Border}"
                             BorderThickness="1"
                             CornerRadius="6"
-                            Background="#121419">
-                        <Image Source="{Binding PreviewBitmap}" Stretch="Fill" />
+                            Background="#121419"
+                            MouseLeftButtonDown="OnPreviewMouseLeftButtonDown"
+                            MouseMove="OnPreviewMouseMove"
+                            MouseLeftButtonUp="OnPreviewMouseLeftButtonUp"
+                            MouseLeave="OnPreviewMouseLeave">
+                        <Grid>
+                            <Image Source="{Binding PreviewBitmap}" Stretch="Fill" />
+                            <Path x:Name="PreviewLayerOutline"
+                                  IsHitTestVisible="False"
+                                  Visibility="Collapsed"
+                                  Fill="#22000000"
+                                  Stroke="#FF4F9DFF"
+                                  StrokeThickness="2"
+                                  StrokeLineJoin="Round"
+                                  StrokeStartLineCap="Round"
+                                  StrokeEndLineCap="Round" />
+                        </Grid>
                     </Border>
                 </Viewbox>
             </DockPanel>
@@ -427,7 +443,7 @@
             </DockPanel>
         </Border>
 
-        <Border Grid.RowSpan="2"
+        <Border Grid.Row="0" Grid.RowSpan="2"
                 Grid.ColumnSpan="3"
                 HorizontalAlignment="Right"
                 VerticalAlignment="Top"

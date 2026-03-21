@@ -1,8 +1,10 @@
-﻿using System.Windows;
+﻿using System.IO;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using SimpleSpoutOverlay.Models;
 using SimpleSpoutOverlay.UI.Dialogs;
 using SimpleSpoutOverlay.UI.ViewModels;
@@ -10,12 +12,17 @@ using SimpleSpoutOverlay.UI.ViewModels;
 namespace SimpleSpoutOverlay;
 
 /// Interaction logic for MainWindow.xaml
-public partial class MainWindow : Window
+public partial class MainWindow
 {
     private Point _dragStartPoint;
     private InsertionAdorner? _insertionAdorner;
     private ListBoxItem? _dropTargetItem;
     private bool _insertAfterTarget;
+    private bool _isPreviewDragging;
+    private LayerBase? _previewDraggedLayer;
+    private Point _previewDragStartPoint;
+    private double _previewLayerStartX;
+    private double _previewLayerStartY;
 
     public MainWindow()
     {
@@ -61,6 +68,303 @@ public partial class MainWindow : Window
         if (dialog.ShowDialog() == true)
         {
             viewModel.SelectedOutlineColor = dialog.SelectedColor;
+        }
+    }
+
+    private void OnPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (DataContext is not MainWindowViewModel viewModel)
+        {
+            return;
+        }
+
+        Point point = e.GetPosition(PreviewSurface);
+        LayerBase? hitLayer = HitTestLayer(point, viewModel);
+        if (hitLayer == null)
+        {
+            return;
+        }
+
+        viewModel.SelectedLayer = hitLayer;
+        _previewDraggedLayer = hitLayer;
+        _previewDragStartPoint = point;
+        _previewLayerStartX = hitLayer.PositionX;
+        _previewLayerStartY = hitLayer.PositionY;
+        _isPreviewDragging = true;
+        ShowPreviewLayerOutline(hitLayer, isDragging: true);
+
+        viewModel.BeginSliderUndoGesture();
+        PreviewSurface.CaptureMouse();
+        Mouse.OverrideCursor = Cursors.SizeAll;
+        e.Handled = true;
+    }
+
+    private void OnPreviewMouseMove(object sender, MouseEventArgs e)
+    {
+        if (DataContext is not MainWindowViewModel viewModel)
+        {
+            return;
+        }
+
+        Point point = e.GetPosition(PreviewSurface);
+
+        if (_isPreviewDragging && _previewDraggedLayer != null)
+        {
+            Vector delta = point - _previewDragStartPoint;
+            viewModel.SelectedPositionX = _previewLayerStartX + delta.X;
+            viewModel.SelectedPositionY = _previewLayerStartY + delta.Y;
+            ShowPreviewLayerOutline(_previewDraggedLayer, isDragging: true);
+            e.Handled = true;
+            return;
+        }
+
+        LayerBase? hoverLayer = HitTestLayer(point, viewModel);
+        PreviewSurface.Cursor = hoverLayer != null ? Cursors.SizeAll : Cursors.Arrow;
+        ShowPreviewLayerOutline(hoverLayer, isDragging: false);
+    }
+
+    private void OnPreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+    {
+        if (!_isPreviewDragging || DataContext is not MainWindowViewModel viewModel)
+        {
+            return;
+        }
+
+        EndPreviewDrag(viewModel);
+        e.Handled = true;
+    }
+
+    private void EndPreviewDrag(MainWindowViewModel viewModel)
+    {
+        if (!_isPreviewDragging)
+        {
+            return;
+        }
+
+        _isPreviewDragging = false;
+        _previewDraggedLayer = null;
+        PreviewSurface.ReleaseMouseCapture();
+        Mouse.OverrideCursor = null;
+        viewModel.CommitSliderUndoGesture();
+
+        Point pointer = Mouse.GetPosition(PreviewSurface);
+        if (!IsPointInsidePreviewSurface(pointer))
+        {
+            HidePreviewLayerOutline();
+            PreviewSurface.Cursor = Cursors.Arrow;
+            return;
+        }
+
+        LayerBase? hoverLayer = HitTestLayer(pointer, viewModel);
+        PreviewSurface.Cursor = hoverLayer != null ? Cursors.SizeAll : Cursors.Arrow;
+        ShowPreviewLayerOutline(hoverLayer, isDragging: false);
+    }
+
+    private void OnPreviewMouseLeave(object sender, MouseEventArgs e)
+    {
+        if (_isPreviewDragging)
+        {
+            return;
+        }
+
+        PreviewSurface.Cursor = Cursors.Arrow;
+        HidePreviewLayerOutline();
+    }
+
+    private LayerBase? HitTestLayer(Point point, MainWindowViewModel viewModel)
+    {
+        foreach (LayerBase layer in viewModel.Layers)
+        {
+            if (layer is TextLayer textLayer)
+            {
+                // Text uses a hybrid hit test so clicks in counters/glyph gaps still select the top text layer.
+                if (LayerContainsPoint(textLayer, point) || TextBoundsContainsPoint(textLayer, point))
+                {
+                    return textLayer;
+                }
+
+                continue;
+            }
+
+            if (LayerContainsPoint(layer, point))
+            {
+                return layer;
+            }
+        }
+
+        return null;
+    }
+
+    private static bool LayerContainsPoint(LayerBase layer, Point point)
+    {
+        switch (layer)
+        {
+            case ImageLayer imageLayer:
+                return GetImageLayerBounds(imageLayer).Contains(point);
+            case TextLayer textLayer:
+            {
+                Geometry? geometry = BuildTextLayerGeometry(textLayer);
+                if (geometry == null)
+                {
+                    return false;
+                }
+
+                if (geometry.FillContains(point))
+                {
+                    return true;
+                }
+
+                if (textLayer is not { OutlineEnabled: true, OutlineThickness: > 0 }) return false;
+                Pen outlinePen = new(Brushes.Transparent, textLayer.OutlineThickness)
+                {
+                    LineJoin = PenLineJoin.Round,
+                    StartLineCap = PenLineCap.Round,
+                    EndLineCap = PenLineCap.Round
+                };
+
+                return geometry.StrokeContains(outlinePen, point);
+
+            }
+            default:
+                return false;
+        }
+    }
+
+    private static bool TextBoundsContainsPoint(TextLayer layer, Point point)
+    {
+        Rect bounds = GetTextLayerBounds(layer);
+        return !bounds.IsEmpty && bounds.Contains(point);
+    }
+
+    private void ShowPreviewLayerOutline(LayerBase? layer, bool isDragging)
+    {
+        if (layer == null)
+        {
+            HidePreviewLayerOutline();
+            return;
+        }
+
+        Geometry? geometry = GetLayerGeometry(layer);
+        if (geometry == null)
+        {
+            HidePreviewLayerOutline();
+            return;
+        }
+
+        PreviewLayerOutline.Data = geometry;
+        PreviewLayerOutline.StrokeThickness = isDragging ? 3 : 2;
+        PreviewLayerOutline.Fill = isDragging
+            ? new SolidColorBrush(Color.FromArgb(48, 79, 157, 255))
+            : new SolidColorBrush(Color.FromArgb(28, 79, 157, 255));
+        PreviewLayerOutline.Visibility = Visibility.Visible;
+    }
+
+    private void HidePreviewLayerOutline()
+    {
+        PreviewLayerOutline.Data = null;
+        PreviewLayerOutline.Visibility = Visibility.Collapsed;
+    }
+
+    private static bool IsPointInsidePreviewSurface(Point point)
+    {
+        return point is { X: >= 0 and <= 1920, Y: >= 0 and <= 1080 };
+    }
+
+    private static Geometry? GetLayerGeometry(LayerBase layer)
+    {
+        return layer switch
+        {
+            ImageLayer imageLayer => GetImageLayerBounds(imageLayer) is { IsEmpty: false } bounds
+                ? new RectangleGeometry(bounds)
+                : null,
+            TextLayer textLayer => GetTextLayerBounds(textLayer) is { IsEmpty: false } bounds
+                ? new RectangleGeometry(bounds)
+                : null,
+            _ => null
+        };
+    }
+
+    private static Rect GetTextLayerBounds(TextLayer layer)
+    {
+        Geometry? geometry = BuildTextLayerGeometry(layer);
+        if (geometry == null)
+        {
+            return Rect.Empty;
+        }
+
+        Rect bounds = geometry.Bounds;
+        if (layer is { OutlineEnabled: true, OutlineThickness: > 0 })
+        {
+            bounds.Inflate(layer.OutlineThickness / 2.0, layer.OutlineThickness / 2.0);
+        }
+
+        return bounds;
+    }
+
+    private static Rect GetImageLayerBounds(ImageLayer layer)
+    {
+        if (!TryGetImagePixelSize(layer.ImagePath, out int pixelWidth, out int pixelHeight))
+        {
+            return Rect.Empty;
+        }
+
+        double drawWidth = pixelWidth * Math.Max(layer.ScaleX, 0.01);
+        double drawHeight = pixelHeight * Math.Max(layer.ScaleY, 0.01);
+        return new Rect(layer.PositionX, layer.PositionY, drawWidth, drawHeight);
+    }
+
+    private static Geometry? BuildTextLayerGeometry(TextLayer layer)
+    {
+        if (string.IsNullOrWhiteSpace(layer.Text))
+        {
+            return null;
+        }
+
+        Typeface typeface = new(new FontFamily(layer.FontFamily), FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
+        FormattedText formattedText = new(
+            layer.Text,
+            System.Globalization.CultureInfo.CurrentCulture,
+            FlowDirection.LeftToRight,
+            typeface,
+            layer.FontSize,
+            Brushes.Black,
+            1.0);
+
+        Geometry geometry = formattedText.BuildGeometry(new Point(0, 0));
+        TransformGroup transformGroup = new();
+        transformGroup.Children.Add(new ScaleTransform(layer.ScaleX, layer.ScaleY));
+        transformGroup.Children.Add(new TranslateTransform(layer.PositionX, layer.PositionY));
+        geometry.Transform = transformGroup;
+
+        return geometry;
+    }
+
+    private static bool TryGetImagePixelSize(string path, out int width, out int height)
+    {
+        width = 0;
+        height = 0;
+
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return false;
+        }
+
+        try
+        {
+            string normalizedPath = Path.GetFullPath(path);
+            if (!File.Exists(normalizedPath))
+            {
+                return false;
+            }
+
+            BitmapFrame frame = BitmapFrame.Create(new Uri(normalizedPath, UriKind.Absolute), BitmapCreateOptions.DelayCreation, BitmapCacheOption.None);
+            width = frame.PixelWidth;
+            height = frame.PixelHeight;
+            return width > 0 && height > 0;
+        }
+        catch
+        {
+            return false;
         }
     }
 
