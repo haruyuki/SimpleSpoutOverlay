@@ -257,6 +257,7 @@
                                 <TextBlock Text="Text" Style="{DynamicResource FieldLabelStyle}" />
                                 <TextBox Text="{Binding SelectedText, UpdateSourceTrigger=PropertyChanged}"
                                          TextWrapping="Wrap"
+                                         AcceptsReturn="True"
                                          Height="76"
                                          HorizontalAlignment="Stretch" />
                             </StackPanel>
