@@ -53,5 +53,20 @@ namespace SimpleSpoutOverlay.UI.Converters
             return Binding.DoNothing;
         }
     }
-}
 
+    public class SingleLineTextConverter : IValueConverter
+    {
+        public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+        {
+            string text = value as string ?? string.Empty;
+            return text.Replace("\r\n", " ")
+                       .Replace('\n', ' ')
+                       .Replace('\r', ' ');
+        }
+
+        public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        {
+            return Binding.DoNothing;
+        }
+    }
+}
