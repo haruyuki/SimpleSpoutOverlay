@@ -30,10 +30,6 @@
             <Setter Property="Margin" Value="0,0,0,4" />
         </Style>
 
-        <Style x:Key="LayerSectionSpacingStyle" TargetType="StackPanel">
-            <Setter Property="Margin" Value="0,0,0,14" />
-        </Style>
-
         <Style x:Key="TextLayerSectionStyle" TargetType="StackPanel">
             <Setter Property="Visibility" Value="Collapsed" />
             <Style.Triggers>
@@ -89,9 +85,9 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="290" />
+            <ColumnDefinition Width="300" />
             <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="360" />
+            <ColumnDefinition Width="300" />
         </Grid.ColumnDefinitions>
 
         <Border Grid.Row="0"
@@ -267,17 +263,18 @@
         </Border>
 
         <Border Grid.Row="1" Grid.Column="2" Style="{DynamicResource PanelBorderStyle}">
-            <DockPanel LastChildFill="True">
+            <DockPanel>
                 <TextBlock DockPanel.Dock="Top" Text="{markup:LanguageKey Label.LayerProperties}" Style="{DynamicResource PanelTitleStyle}" />
 
-                <ScrollViewer x:Name="LayerPropertiesScrollViewer"
-                              VerticalScrollBarVisibility="Auto"
+                <ScrollViewer
+                    VerticalScrollBarVisibility="Auto"
                               HorizontalScrollBarVisibility="Disabled"
                               HorizontalContentAlignment="Stretch"
                               Visibility="{Binding SelectedLayer, Converter={StaticResource SelectedLayerToVisibilityConverter}}">
-                    <Border Padding="0,0,12,0">
-                    <StackPanel Margin="12,12,0,0"
-                                HorizontalAlignment="Stretch">
+                    <Border Padding="12,12,12,0"
+                              >
+                      <StackPanel HorizontalAlignment="Stretch"
+                                  MinWidth="255">
                         <StackPanel Style="{StaticResource TextLayerSectionStyle}">
                             <Expander Header="{markup:LanguageKey Expander.TextContent}" Style="{StaticResource PropertySectionExpanderStyle}" IsExpanded="True">
                                 <StackPanel Margin="0,8,0,0">
@@ -374,7 +371,7 @@
                                         <TextBlock Text="{markup:LanguageKey Label.OutlineThickness}" Style="{DynamicResource FieldLabelStyle}" />
                                         <Grid>
                                             <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="250" />
+                                                <ColumnDefinition Width="*" />
                                                 <ColumnDefinition Width="56" />
                                             </Grid.ColumnDefinitions>
                                             <Slider Grid.Column="0"
@@ -407,7 +404,7 @@
                                     <TextBlock Text="{markup:LanguageKey Label.PositionX}" Style="{DynamicResource FieldLabelStyle}" />
                                     <Grid>
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="250" />
+                                            <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="56" />
                                         </Grid.ColumnDefinitions>
                                         <Slider Grid.Column="0"
@@ -425,7 +422,7 @@
                                     <TextBlock Text="{markup:LanguageKey Label.PositionY}" Style="{DynamicResource FieldLabelStyle}" />
                                     <Grid>
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="250" />
+                                            <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="56" />
                                         </Grid.ColumnDefinitions>
                                         <Slider Grid.Column="0"
@@ -443,7 +440,7 @@
                                     <TextBlock Text="{markup:LanguageKey Label.ScaleX}" Style="{DynamicResource FieldLabelStyle}" />
                                     <Grid>
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="250" />
+                                            <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="56" />
                                         </Grid.ColumnDefinitions>
                                         <Slider Grid.Column="0"
@@ -461,7 +458,7 @@
                                     <TextBlock Text="{markup:LanguageKey Label.ScaleY}" Style="{DynamicResource FieldLabelStyle}" />
                                     <Grid>
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="250" />
+                                            <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="56" />
                                         </Grid.ColumnDefinitions>
                                         <Slider Grid.Column="0"
