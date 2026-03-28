@@ -31,6 +31,15 @@ public sealed class SessionPersistenceService
         }
     }
 
+    private static string LanguagePreferenceFile
+    {
+        get
+        {
+            string appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            return Path.Combine(appData, "SimpleSpoutOverlay", "language-preference.txt");
+        }
+    }
+
     public static SessionState? LoadFromPath(string path)
     {
         if (!File.Exists(path))
@@ -82,6 +91,33 @@ public sealed class SessionPersistenceService
 
         string value = File.ReadAllText(LastSavedSetupPathFile).Trim();
         return string.IsNullOrWhiteSpace(value) ? null : value;
+    }
+
+    public static void SaveLanguagePreference(string languageCode)
+    {
+        if (string.IsNullOrWhiteSpace(languageCode))
+        {
+            return;
+        }
+
+        string? directory = Path.GetDirectoryName(LanguagePreferenceFile);
+        if (!string.IsNullOrWhiteSpace(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
+
+        File.WriteAllText(LanguagePreferenceFile, languageCode);
+    }
+
+    public static string LoadLanguagePreference()
+    {
+        if (!File.Exists(LanguagePreferenceFile))
+        {
+            return "en-US";
+        }
+
+        string value = File.ReadAllText(LanguagePreferenceFile).Trim();
+        return string.IsNullOrWhiteSpace(value) ? "en-US" : value;
     }
 }
 

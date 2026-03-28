@@ -1,5 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
+using SimpleSpoutOverlay.Services;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
@@ -11,7 +12,6 @@ using System.Windows.Threading;
 using Microsoft.Win32;
 using SimpleSpoutOverlay.Models;
 using SimpleSpoutOverlay.Rendering;
-using SimpleSpoutOverlay.Services;
 
 namespace SimpleSpoutOverlay.UI.ViewModels
 {
@@ -82,6 +82,7 @@ namespace SimpleSpoutOverlay.UI.ViewModels
         public RelayCommand RedoCommand { get; }
         public RelayCommand SaveSetupCommand { get; }
         public RelayCommand LoadSetupCommand { get; }
+        public RelayCommand ChangeLanguageCommand { get; }
 
         public MainWindowViewModel()
         {
@@ -101,6 +102,7 @@ namespace SimpleSpoutOverlay.UI.ViewModels
             RedoCommand = new RelayCommand(_ => Redo(), _ => CanRedo);
             SaveSetupCommand = new RelayCommand(_ => ExecuteSaveSetup());
             LoadSetupCommand = new RelayCommand(_ => ExecuteLoadSetup());
+            ChangeLanguageCommand = new RelayCommand(param => ExecuteChangeLanguage(param));
             _sessionPersistenceService = new SessionPersistenceService();
             _toastTimer = new DispatcherTimer
             {
@@ -532,6 +534,22 @@ namespace SimpleSpoutOverlay.UI.ViewModels
             1.8,
             2.0
         ];
+
+        public IReadOnlyList<string> AvailableLanguages => LocalizationService.Instance.AvailableLanguages;
+
+        public static Dictionary<string, string> LanguageNames => LocalizationService.LanguageNames;
+
+        public string CurrentLanguage
+        {
+            get => LocalizationService.Instance.CurrentLanguageCode;
+            set
+            {
+                if (LocalizationService.Instance.CurrentLanguageCode == value) return;
+                LocalizationService.Instance.SetLanguage(value);
+                SessionPersistenceService.SaveLanguagePreference(value);
+                OnPropertyChanged();
+            }
+        }
 
         private void AddTextLayer()
         {
@@ -1115,6 +1133,14 @@ namespace SimpleSpoutOverlay.UI.ViewModels
             catch (Exception ex)
             {
                 Debug.WriteLine($"Failed to load default session: {ex.Message}");
+            }
+        }
+
+        private void ExecuteChangeLanguage(object? param)
+        {
+            if (param is string languageCode)
+            {
+                CurrentLanguage = languageCode;
             }
         }
 

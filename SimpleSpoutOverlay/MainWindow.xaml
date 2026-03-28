@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:converters="clr-namespace:SimpleSpoutOverlay.UI.Converters"
         xmlns:behaviors="clr-namespace:SimpleSpoutOverlay.UI.Behaviors"
+        xmlns:markup="clr-namespace:SimpleSpoutOverlay.UI.Markup"
         mc:Ignorable="d"
         Title="Spout Text Overlay"
         Height="840"
@@ -99,24 +100,36 @@
                 Margin="0,0,0,10"
                 Padding="10">
             <DockPanel LastChildFill="False">
-                <TextBlock Text="Session"
+                <TextBlock Text="{markup:LanguageKey Label.Session}"
                            VerticalAlignment="Center"
                            Foreground="{DynamicResource Brush.TextMuted}"
                            Margin="0,0,10,0" />
 
                 <Button Command="{Binding SaveSetupCommand}"
-                        Content="Save Setup"
+                        Content="{markup:LanguageKey Button.SaveSetup}"
                         Style="{DynamicResource SecondaryButtonStyle}"
                         Margin="0,0,8,0" />
                 <Button Command="{Binding LoadSetupCommand}"
-                        Content="Load Setup"
+                        Content="{markup:LanguageKey Button.LoadSetup}"
                         Style="{DynamicResource SecondaryButtonStyle}"
                         Margin="0,0,8,0" />
 
-                <CheckBox Content="Snapping"
+                <CheckBox Content="{markup:LanguageKey Button.Snapping}"
                           VerticalAlignment="Center"
                           IsChecked="{Binding IsSnappingEnabled, Mode=TwoWay}"
                           Foreground="{DynamicResource Brush.TextPrimary}" />
+
+                <ComboBox ItemsSource="{Binding AvailableLanguages}"
+                          SelectedItem="{Binding CurrentLanguage, Mode=TwoWay}"
+                          Width="120"
+                          Margin="8,0,0,0"
+                          VerticalAlignment="Center">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding ., Converter={x:Static markup:LanguageDisplayConverter.Instance}}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
 
                 <Button Command="{Binding ToggleSpoutCommand}"
                         DockPanel.Dock="Right"
@@ -127,10 +140,10 @@
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding SpoutEnabled}" Value="True">
                                     <Setter Property="Background" Value="#d2691e" />
-                                    <Setter Property="Content" Value="Spout Active" />
+                                    <Setter Property="Content" Value="{DynamicResource Button.SpoutActive}" />
                                 </DataTrigger>
                                 <DataTrigger Binding="{Binding SpoutEnabled}" Value="False">
-                                    <Setter Property="Content" Value="Start Spout" />
+                                    <Setter Property="Content" Value="{DynamicResource Button.StartSpout}" />
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
@@ -147,7 +160,7 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <TextBlock Grid.Row="0" Text="Layers" Style="{DynamicResource PanelTitleStyle}" />
+                <TextBlock Grid.Row="0" Text="{markup:LanguageKey Label.Layers}" Style="{DynamicResource PanelTitleStyle}" />
 
                 <ListBox Grid.Row="1"
                          ItemsSource="{Binding Layers}"
@@ -181,13 +194,13 @@
                         </Grid.ColumnDefinitions>
                         <Button Grid.Column="0"
                                 Command="{Binding AddLayerCommand}"
-                                Content="Add Text" />
+                                Content="{markup:LanguageKey Button.AddText}" />
                         <Button Grid.Column="2"
                                 Command="{Binding AddImageLayerCommand}"
-                                Content="Add Image" />
+                                Content="{markup:LanguageKey Button.AddImage}" />
                         <Button Grid.Column="4"
                                 Command="{Binding DeleteLayerCommand}"
-                                Content="Delete"
+                                Content="{markup:LanguageKey Button.Delete}"
                                 Style="{DynamicResource DangerButtonStyle}"
                                 IsEnabled="{Binding SelectedLayer, Converter={StaticResource HasValueToBoolConverter}}" />
                     </Grid>
@@ -199,12 +212,12 @@
                         </Grid.ColumnDefinitions>
                         <Button Grid.Column="0"
                                 Command="{Binding MoveLayerUpCommand}"
-                                Content="Move Up"
+                                Content="{markup:LanguageKey Button.MoveUp}"
                                 Style="{DynamicResource SuccessButtonStyle}"
                                 IsEnabled="{Binding SelectedLayer, Converter={StaticResource HasValueToBoolConverter}}" />
                         <Button Grid.Column="2"
                                 Command="{Binding MoveLayerDownCommand}"
-                                Content="Move Down"
+                                Content="{markup:LanguageKey Button.MoveDown}"
                                 Style="{DynamicResource SuccessButtonStyle}"
                                 IsEnabled="{Binding SelectedLayer, Converter={StaticResource HasValueToBoolConverter}}" />
                     </Grid>
@@ -215,10 +228,10 @@
         <Border Grid.Row="1" Grid.Column="1" Style="{DynamicResource PanelBorderStyle}" Margin="0,0,10,0">
             <DockPanel LastChildFill="True">
                 <DockPanel DockPanel.Dock="Top" LastChildFill="False">
-                    <TextBlock Text="Preview (1920 x 1080)" 
-                               Style="{DynamicResource PanelTitleStyle}" 
-                               DockPanel.Dock="Left"
-                               VerticalAlignment="Center" />
+                <TextBlock Text="{markup:LanguageKey Label.Preview}" 
+                           Style="{DynamicResource PanelTitleStyle}" 
+                           DockPanel.Dock="Left"
+                           VerticalAlignment="Center" />
                 </DockPanel>
                 <Viewbox Margin="12"
                          Stretch="Uniform"
@@ -255,7 +268,7 @@
 
         <Border Grid.Row="1" Grid.Column="2" Style="{DynamicResource PanelBorderStyle}">
             <DockPanel LastChildFill="True">
-                <TextBlock DockPanel.Dock="Top" Text="Layer Properties" Style="{DynamicResource PanelTitleStyle}" />
+                <TextBlock DockPanel.Dock="Top" Text="{markup:LanguageKey Label.LayerProperties}" Style="{DynamicResource PanelTitleStyle}" />
 
                 <ScrollViewer x:Name="LayerPropertiesScrollViewer"
                               VerticalScrollBarVisibility="Auto"
@@ -266,9 +279,9 @@
                     <StackPanel Margin="12,12,0,0"
                                 HorizontalAlignment="Stretch">
                         <StackPanel Style="{StaticResource TextLayerSectionStyle}">
-                            <Expander Header="Text Content" Style="{StaticResource PropertySectionExpanderStyle}" IsExpanded="True">
+                            <Expander Header="{markup:LanguageKey Expander.TextContent}" Style="{StaticResource PropertySectionExpanderStyle}" IsExpanded="True">
                                 <StackPanel Margin="0,8,0,0">
-                                    <TextBlock Text="Text" Style="{DynamicResource FieldLabelStyle}" />
+                                    <TextBlock Text="{markup:LanguageKey Label.Text}" Style="{DynamicResource FieldLabelStyle}" />
                                     <TextBox Text="{Binding SelectedText, UpdateSourceTrigger=PropertyChanged}"
                                              TextWrapping="Wrap"
                                              AcceptsReturn="True"
@@ -277,31 +290,31 @@
                                 </StackPanel>
                             </Expander>
 
-                            <Expander Header="Typography" Style="{StaticResource PropertySectionExpanderStyle}" IsExpanded="True">
+                            <Expander Header="{markup:LanguageKey Expander.Typography}" Style="{StaticResource PropertySectionExpanderStyle}" IsExpanded="True">
                                 <StackPanel Margin="0,8,0,0">
                                     <StackPanel Margin="0,0,0,12">
-                                        <TextBlock Text="Font Family" Style="{DynamicResource FieldLabelStyle}" />
+                                        <TextBlock Text="{markup:LanguageKey Label.FontFamily}" Style="{DynamicResource FieldLabelStyle}" />
                                         <ComboBox ItemsSource="{Binding AvailableFonts}"
                                                   SelectedItem="{Binding SelectedFontFamily, UpdateSourceTrigger=PropertyChanged}" />
                                     </StackPanel>
 
                                     <StackPanel Margin="0,0,0,12">
-                                        <TextBlock Text="Font Size (preset or custom)" Style="{DynamicResource FieldLabelStyle}" />
+                                        <TextBlock Text="{markup:LanguageKey Label.FontSize}" Style="{DynamicResource FieldLabelStyle}" />
                                         <ComboBox ItemsSource="{Binding FontSizePresets}"
                                                   IsEditable="False"
                                                   SelectedItem="{Binding SelectedFontSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                                     </StackPanel>
 
                                     <StackPanel Margin="0,0,0,12">
-                                        <TextBlock Text="Text Alignment" Style="{DynamicResource FieldLabelStyle}" />
+                                        <TextBlock Text="{markup:LanguageKey Label.TextAlignment}" Style="{DynamicResource FieldLabelStyle}" />
                                         <UniformGrid Columns="3">
-                                            <ToggleButton Content="Left"
+                                            <ToggleButton Content="{markup:LanguageKey Button.AlignLeft}"
                                                           Style="{StaticResource AlignmentToggleButtonStyle}"
                                                           IsChecked="{Binding IsTextAlignLeft, Mode=TwoWay}" />
-                                            <ToggleButton Content="Center"
+                                            <ToggleButton Content="{markup:LanguageKey Button.AlignCenter}"
                                                           Style="{StaticResource AlignmentToggleButtonStyle}"
                                                           IsChecked="{Binding IsTextAlignCenter, Mode=TwoWay}" />
-                                            <ToggleButton Content="Right"
+                                            <ToggleButton Content="{markup:LanguageKey Button.AlignRight}"
                                                           Margin="0"
                                                           Style="{StaticResource AlignmentToggleButtonStyle}"
                                                           IsChecked="{Binding IsTextAlignRight, Mode=TwoWay}" />
@@ -309,7 +322,7 @@
                                     </StackPanel>
 
                                     <StackPanel>
-                                        <TextBlock Text="Line Height (preset or custom)" Style="{DynamicResource FieldLabelStyle}" />
+                                        <TextBlock Text="{markup:LanguageKey Label.LineHeight}" Style="{DynamicResource FieldLabelStyle}" />
                                         <ComboBox ItemsSource="{Binding LineHeightPresets}"
                                                   IsEditable="False"
                                                   SelectedItem="{Binding SelectedLineHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
@@ -317,9 +330,9 @@
                                 </StackPanel>
                             </Expander>
 
-                            <Expander Header="Appearance" Style="{StaticResource PropertySectionExpanderStyle}">
+                            <Expander Header="{markup:LanguageKey Expander.Appearance}" Style="{StaticResource PropertySectionExpanderStyle}">
                                 <StackPanel Margin="0,8,0,0">
-                                    <TextBlock Text="Fill Color" Style="{DynamicResource FieldLabelStyle}" />
+                                    <TextBlock Text="{markup:LanguageKey Label.FillColor}" Style="{DynamicResource FieldLabelStyle}" />
                                     <StackPanel Orientation="Horizontal">
                                         <Rectangle Width="42"
                                                    Height="42"
@@ -327,7 +340,7 @@
                                                    Stroke="{DynamicResource Brush.Border}"
                                                    StrokeThickness="1"
                                                    Margin="0,0,10,0" />
-                                        <Button Content="Choose Color"
+                                        <Button Content="{markup:LanguageKey Button.ChooseColor}"
                                                 Width="130"
                                                 VerticalAlignment="Center"
                                                 Click="OnChooseFillColor" />
@@ -335,14 +348,14 @@
                                 </StackPanel>
                             </Expander>
 
-                            <Expander Header="Outline" Style="{StaticResource PropertySectionExpanderStyle}">
+                            <Expander Header="{markup:LanguageKey Expander.Outline}" Style="{StaticResource PropertySectionExpanderStyle}">
                                 <StackPanel Margin="0,8,0,0">
                                     <CheckBox IsChecked="{Binding SelectedOutlineEnabled, UpdateSourceTrigger=PropertyChanged}"
-                                              Content="Enable Outline"
+                                              Content="{markup:LanguageKey CheckBox.EnableOutline}"
                                               Margin="0,0,0,10" />
 
                                     <StackPanel Margin="0,0,0,12" Opacity="{Binding SelectedOutlineEnabled}">
-                                        <TextBlock Text="Outline Color" Style="{DynamicResource FieldLabelStyle}" />
+                                        <TextBlock Text="{markup:LanguageKey Label.OutlineColor}" Style="{DynamicResource FieldLabelStyle}" />
                                         <StackPanel Orientation="Horizontal">
                                             <Rectangle Width="42"
                                                        Height="42"
@@ -350,7 +363,7 @@
                                                        Stroke="{DynamicResource Brush.Border}"
                                                        StrokeThickness="1"
                                                        Margin="0,0,10,0" />
-                                            <Button Content="Choose Color"
+                                            <Button Content="{markup:LanguageKey Button.ChooseColor}"
                                                     Width="130"
                                                     VerticalAlignment="Center"
                                                     Click="OnChooseOutlineColor" />
@@ -358,7 +371,7 @@
                                     </StackPanel>
 
                                     <StackPanel Style="{StaticResource PropertyRowCompactStyle}">
-                                        <TextBlock Text="Outline Thickness" Style="{DynamicResource FieldLabelStyle}" />
+                                        <TextBlock Text="{markup:LanguageKey Label.OutlineThickness}" Style="{DynamicResource FieldLabelStyle}" />
                                         <Grid>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="250" />
@@ -379,19 +392,19 @@
                         </StackPanel>
 
                         <StackPanel Style="{StaticResource ImageLayerSectionStyle}">
-                            <Expander Header="Image" Style="{StaticResource PropertySectionExpanderStyle}" IsExpanded="True">
+                            <Expander Header="{markup:LanguageKey Expander.Image}" Style="{StaticResource PropertySectionExpanderStyle}" IsExpanded="True">
                                 <StackPanel Margin="0,8,0,0">
-                                    <TextBlock Text="Image File" Style="{DynamicResource FieldLabelStyle}" />
+                                    <TextBlock Text="{markup:LanguageKey Label.ImageFile}" Style="{DynamicResource FieldLabelStyle}" />
                                     <TextBox Text="{Binding SelectedImagePath}" IsReadOnly="True" TextWrapping="Wrap" Margin="0,0,0,8" />
-                                    <Button Command="{Binding ReplaceImageCommand}" Content="Choose Image" Width="130" />
+                                    <Button Command="{Binding ReplaceImageCommand}" Content="{markup:LanguageKey Button.ChooseImage}" Width="130" />
                                 </StackPanel>
                             </Expander>
                         </StackPanel>
 
-                        <Expander Header="Transform" Style="{StaticResource PropertySectionExpanderStyle}">
+                        <Expander Header="{markup:LanguageKey Expander.Transform}" Style="{StaticResource PropertySectionExpanderStyle}">
                             <StackPanel Margin="0,8,0,0">
                                 <StackPanel Style="{StaticResource PropertyRowStyle}">
-                                    <TextBlock Text="Position X" Style="{DynamicResource FieldLabelStyle}" />
+                                    <TextBlock Text="{markup:LanguageKey Label.PositionX}" Style="{DynamicResource FieldLabelStyle}" />
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="250" />
@@ -409,7 +422,7 @@
                                 </StackPanel>
 
                                 <StackPanel Style="{StaticResource PropertyRowStyle}">
-                                    <TextBlock Text="Position Y" Style="{DynamicResource FieldLabelStyle}" />
+                                    <TextBlock Text="{markup:LanguageKey Label.PositionY}" Style="{DynamicResource FieldLabelStyle}" />
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="250" />
@@ -427,7 +440,7 @@
                                 </StackPanel>
 
                                 <StackPanel Style="{StaticResource PropertyRowStyle}">
-                                    <TextBlock Text="Scale X" Style="{DynamicResource FieldLabelStyle}" />
+                                    <TextBlock Text="{markup:LanguageKey Label.ScaleX}" Style="{DynamicResource FieldLabelStyle}" />
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="250" />
@@ -445,7 +458,7 @@
                                 </StackPanel>
 
                                 <StackPanel Style="{StaticResource PropertyRowCompactStyle}">
-                                    <TextBlock Text="Scale Y" Style="{DynamicResource FieldLabelStyle}" />
+                                    <TextBlock Text="{markup:LanguageKey Label.ScaleY}" Style="{DynamicResource FieldLabelStyle}" />
                                     <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="250" />
@@ -467,7 +480,7 @@
                     </Border>
                 </ScrollViewer>
 
-                <TextBlock Text="No layer selected"
+                <TextBlock Text="{markup:LanguageKey Label.NoLayerSelected}"
                            Foreground="{DynamicResource Brush.TextMuted}"
                            FontSize="13"
                            Padding="14"

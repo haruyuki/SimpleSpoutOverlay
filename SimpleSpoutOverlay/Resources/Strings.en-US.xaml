@@ -1,0 +1,66 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:system="clr-namespace:System;assembly=mscorlib">
+    <!-- Panel and UI Labels -->
+    <system:String x:Key="Label.Layers">Layers</system:String>
+    <system:String x:Key="Label.Preview">Preview (1920 x 1080)</system:String>
+    <system:String x:Key="Label.LayerProperties">Layer Properties</system:String>
+    <system:String x:Key="Label.NoLayerSelected">No layer selected</system:String>
+
+    <!-- Session Controls -->
+    <system:String x:Key="Label.Session">Session</system:String>
+    <system:String x:Key="Button.SaveSetup">Save Setup</system:String>
+    <system:String x:Key="Button.LoadSetup">Load Setup</system:String>
+    <system:String x:Key="Button.Snapping">Snapping</system:String>
+    <system:String x:Key="Button.StartSpout">Start Spout</system:String>
+    <system:String x:Key="Button.SpoutActive">Spout Active</system:String>
+    <system:String x:Key="Button.Language">Language</system:String>
+
+    <!-- Layer Controls -->
+    <system:String x:Key="Button.AddText">Add Text</system:String>
+    <system:String x:Key="Button.AddImage">Add Image</system:String>
+    <system:String x:Key="Button.Delete">Delete</system:String>
+    <system:String x:Key="Button.MoveUp">Move Up</system:String>
+    <system:String x:Key="Button.MoveDown">Move Down</system:String>
+
+    <!-- Text Layer Properties -->
+    <system:String x:Key="Expander.TextContent">Text Content</system:String>
+    <system:String x:Key="Label.Text">Text</system:String>
+    <system:String x:Key="Expander.Typography">Typography</system:String>
+    <system:String x:Key="Label.FontFamily">Font Family</system:String>
+    <system:String x:Key="Label.FontSize">Font Size (preset or custom)</system:String>
+    <system:String x:Key="Label.TextAlignment">Text Alignment</system:String>
+    <system:String x:Key="Button.AlignLeft">Left</system:String>
+    <system:String x:Key="Button.AlignCenter">Center</system:String>
+    <system:String x:Key="Button.AlignRight">Right</system:String>
+    <system:String x:Key="Label.LineHeight">Line Height (preset or custom)</system:String>
+    <system:String x:Key="Expander.Appearance">Appearance</system:String>
+    <system:String x:Key="Label.FillColor">Fill Color</system:String>
+    <system:String x:Key="Button.ChooseColor">Choose Color</system:String>
+    <system:String x:Key="Expander.Outline">Outline</system:String>
+    <system:String x:Key="CheckBox.EnableOutline">Enable Outline</system:String>
+    <system:String x:Key="Label.OutlineColor">Outline Color</system:String>
+    <system:String x:Key="Label.OutlineThickness">Outline Thickness</system:String>
+
+    <!-- Image Layer Properties -->
+    <system:String x:Key="Expander.Image">Image</system:String>
+    <system:String x:Key="Label.ImageFile">Image File</system:String>
+    <system:String x:Key="Button.ChooseImage">Choose Image</system:String>
+
+    <!-- Transform Properties -->
+    <system:String x:Key="Expander.Transform">Transform</system:String>
+    <system:String x:Key="Label.PositionX">Position X</system:String>
+    <system:String x:Key="Label.PositionY">Position Y</system:String>
+    <system:String x:Key="Label.ScaleX">Scale X</system:String>
+    <system:String x:Key="Label.ScaleY">Scale Y</system:String>
+
+    <!-- Toast Messages -->
+    <system:String x:Key="Toast.SetupSaved">Setup saved: {0}</system:String>
+    <system:String x:Key="Toast.SetupLoaded">Setup loaded: {0}</system:String>
+    <system:String x:Key="Toast.FailedToSaveSetup">Failed to save setup file.</system:String>
+    <system:String x:Key="Toast.FailedToLoadSetup">Failed to load setup file.</system:String>
+    <system:String x:Key="Toast.InvalidSetupFile">Invalid or empty setup file.</system:String>
+    <system:String x:Key="Toast.ImageAdded">Image added: {0}</system:String>
+    <system:String x:Key="Toast.ImageUpdated">Image updated: {0}</system:String>
+</ResourceDictionary>
+
