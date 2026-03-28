@@ -3,70 +3,69 @@ using System.Windows;
 using System.Windows.Data;
 using System.Windows.Media;
 
-namespace SimpleSpoutOverlay.UI.Converters
+namespace SimpleSpoutOverlay.UI.Converters;
+
+public class ColorToBrushConverter : IValueConverter
 {
-    public class ColorToBrushConverter : IValueConverter
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
-        public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+        if (value is Color color)
         {
-            if (value is Color color)
-            {
-                return new SolidColorBrush(color);
-            }
-            return new SolidColorBrush(Colors.Transparent);
+            return new SolidColorBrush(color);
         }
-
-        public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-        {
-            if (value is SolidColorBrush brush)
-            {
-                return brush.Color;
-            }
-            return Colors.Transparent;
-        }
+        return new SolidColorBrush(Colors.Transparent);
     }
 
-    public class SelectedLayerToVisibilityConverter : IValueConverter
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
-        public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+        if (value is SolidColorBrush brush)
         {
-            return value != null ? Visibility.Visible : Visibility.Collapsed;
+            return brush.Color;
         }
+        return Colors.Transparent;
+    }
+}
 
-        public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-        {
-            return Binding.DoNothing;
-        }
+public class SelectedLayerToVisibilityConverter : IValueConverter
+{
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        return value != null ? Visibility.Visible : Visibility.Collapsed;
     }
 
-    public class HasValueToBoolConverter : IValueConverter
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
-        public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
-        {
-            bool hasValue = value != null;
-            bool invert = string.Equals(parameter as string, "Invert", StringComparison.OrdinalIgnoreCase);
-            return invert ? !hasValue : hasValue;
-        }
+        return Binding.DoNothing;
+    }
+}
 
-        public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-        {
-            return Binding.DoNothing;
-        }
+public class HasValueToBoolConverter : IValueConverter
+{
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        bool hasValue = value != null;
+        bool invert = string.Equals(parameter as string, "Invert", StringComparison.OrdinalIgnoreCase);
+        return invert ? !hasValue : hasValue;
     }
 
-    public class SingleLineTextConverter : IValueConverter
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
-        public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
-        {
-            string text = value as string ?? string.Empty;
-            return text.Replace("\r\n", " ")
-                       .Replace('\n', ' ')
-                       .Replace('\r', ' ');
-        }
+        return Binding.DoNothing;
+    }
+}
 
-        public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-        {
-            return Binding.DoNothing;
-        }
+public class SingleLineTextConverter : IValueConverter
+{
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        string text = value as string ?? string.Empty;
+        return text.Replace("\r\n", " ")
+            .Replace('\n', ' ')
+            .Replace('\r', ' ');
+    }
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        return Binding.DoNothing;
     }
 }

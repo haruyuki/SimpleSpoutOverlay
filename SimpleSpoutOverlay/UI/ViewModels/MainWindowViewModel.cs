@@ -13,696 +13,686 @@ using Microsoft.Win32;
 using SimpleSpoutOverlay.Models;
 using SimpleSpoutOverlay.Rendering;
 
-namespace SimpleSpoutOverlay.UI.ViewModels
+namespace SimpleSpoutOverlay.UI.ViewModels;
+
+public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
 {
-    public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
+    private readonly LayerManager _layerManager;
+    private TextLayerRenderer? _renderer;
+    private RenderTargetBitmap? _previewBitmap;
+    private LayerBase? _selectedLayer;
+    private bool _isRenderingPreview;
+    private bool _isPreviewRefreshQueued;
+    private bool _previewRefreshPending;
+    private SpoutOutputManager? _spoutManager;
+    private bool _spoutEnabled;
+    private bool _disposed;
+    private readonly Stack<SessionState> _undoStack = new();
+    private readonly Stack<SessionState> _redoStack = new();
+    private bool _suppressHistory;
+    private bool _isSliderUndoGestureActive;
+    private SessionState? _sliderUndoSnapshot;
+    private readonly DispatcherTimer _toastTimer;
+    private readonly Dispatcher _uiDispatcher;
+    private string _toastMessage = string.Empty;
+    private bool _isToastVisible;
+    private bool _toastIsError;
+    private bool _isSnappingEnabled = true;
+
+    private const double MinFontSize = 8;
+    private const double MaxFontSize = 200;
+    private const double MinLineHeightMultiplier = 0.5;
+    private const double MaxLineHeightMultiplier = 3;
+    private const double MinPositionX = 0;
+    private const double MaxPositionX = 1920;
+    private const double MinPositionY = 0;
+    private const double MaxPositionY = 1080;
+    private const double MinScale = 0.1;
+    private const double MaxScale = 3;
+    private const double MinOutlineThickness = 0.5;
+    private const double MaxOutlineThickness = 20;
+
+    private string _selectedText = string.Empty;
+    private string _selectedFontFamily = "Arial";
+    private double _selectedFontSize = 48;
+    private double _selectedLineHeight = 1.0;
+    private string _selectedTextAlignment = nameof(TextAlignment.Left);
+    private Color _selectedFillColor = Colors.White;
+    private double _selectedPositionX = 10;
+    private double _selectedPositionY = 10;
+    private double _selectedScaleX = 1.0;
+    private double _selectedScaleY = 1.0;
+    private bool _selectedOutlineEnabled;
+    private Color _selectedOutlineColor = Colors.Black;
+    private double _selectedOutlineThickness = 2;
+    private string _selectedImagePath = string.Empty;
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    // Commands
+    public RelayCommand AddLayerCommand { get; }
+    public RelayCommand AddImageLayerCommand { get; }
+    public RelayCommand ReplaceImageCommand { get; }
+    public RelayCommand DeleteLayerCommand { get; }
+    public RelayCommand MoveLayerUpCommand { get; }
+    public RelayCommand MoveLayerDownCommand { get; }
+    public RelayCommand ToggleSpoutCommand { get; }
+    public RelayCommand UndoCommand { get; }
+    public RelayCommand RedoCommand { get; }
+    public RelayCommand SaveSetupCommand { get; }
+    public RelayCommand LoadSetupCommand { get; }
+
+    public MainWindowViewModel()
     {
-        private readonly LayerManager _layerManager;
-        private TextLayerRenderer? _renderer;
-        private RenderTargetBitmap? _previewBitmap;
-        private LayerBase? _selectedLayer;
-        private bool _isRenderingPreview;
-        private bool _isPreviewRefreshQueued;
-        private bool _previewRefreshPending;
-        private SpoutOutputManager? _spoutManager;
-        private bool _spoutEnabled;
-        private bool _disposed;
-        private readonly SessionPersistenceService _sessionPersistenceService;
-        private readonly Stack<SessionState> _undoStack = new();
-        private readonly Stack<SessionState> _redoStack = new();
-        private bool _suppressHistory;
-        private bool _isSliderUndoGestureActive;
-        private SessionState? _sliderUndoSnapshot;
-        private readonly DispatcherTimer _toastTimer;
-        private readonly Dispatcher _uiDispatcher;
-        private string _toastMessage = string.Empty;
-        private bool _isToastVisible;
-        private bool _toastIsError;
-        private bool _isSnappingEnabled = true;
+        _uiDispatcher = Dispatcher.CurrentDispatcher;
+        _layerManager = new LayerManager();
+        _layerManager.LayersChanged += OnLayersChanged;
+        _layerManager.SelectionChanged += OnSelectionChanged;
 
-        private const double MinFontSize = 8;
-        private const double MaxFontSize = 200;
-        private const double MinLineHeightMultiplier = 0.5;
-        private const double MaxLineHeightMultiplier = 3;
-        private const double MinPositionX = 0;
-        private const double MaxPositionX = 1920;
-        private const double MinPositionY = 0;
-        private const double MaxPositionY = 1080;
-        private const double MinScale = 0.1;
-        private const double MaxScale = 3;
-        private const double MinOutlineThickness = 0.5;
-        private const double MaxOutlineThickness = 20;
-
-        private string _selectedText = string.Empty;
-        private string _selectedFontFamily = "Arial";
-        private double _selectedFontSize = 48;
-        private double _selectedLineHeight = 1.0;
-        private string _selectedTextAlignment = nameof(TextAlignment.Left);
-        private Color _selectedFillColor = Colors.White;
-        private double _selectedPositionX = 10;
-        private double _selectedPositionY = 10;
-        private double _selectedScaleX = 1.0;
-        private double _selectedScaleY = 1.0;
-        private bool _selectedOutlineEnabled;
-        private Color _selectedOutlineColor = Colors.Black;
-        private double _selectedOutlineThickness = 2;
-        private string _selectedImagePath = string.Empty;
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-
-        // Commands
-        public RelayCommand AddLayerCommand { get; }
-        public RelayCommand AddImageLayerCommand { get; }
-        public RelayCommand ReplaceImageCommand { get; }
-        public RelayCommand DeleteLayerCommand { get; }
-        public RelayCommand MoveLayerUpCommand { get; }
-        public RelayCommand MoveLayerDownCommand { get; }
-        public RelayCommand ToggleSpoutCommand { get; }
-        public RelayCommand UndoCommand { get; }
-        public RelayCommand RedoCommand { get; }
-        public RelayCommand SaveSetupCommand { get; }
-        public RelayCommand LoadSetupCommand { get; }
-        public RelayCommand ChangeLanguageCommand { get; }
-
-        public MainWindowViewModel()
+        AddLayerCommand = new RelayCommand(_ => AddTextLayer());
+        AddImageLayerCommand = new RelayCommand(_ => ExecuteAddImageLayer());
+        ReplaceImageCommand = new RelayCommand(_ => ExecuteReplaceSelectedImage(), _ => IsImageLayerSelected);
+        DeleteLayerCommand = new RelayCommand(_ => DeleteLayer(), _ => SelectedLayer != null);
+        MoveLayerUpCommand = new RelayCommand(_ => MoveLayerUp(), _ => CanMoveLayerUp());
+        MoveLayerDownCommand = new RelayCommand(_ => MoveLayerDown(), _ => CanMoveLayerDown());
+        ToggleSpoutCommand = new RelayCommand(_ => ToggleSpout());
+        UndoCommand = new RelayCommand(_ => Undo(), _ => CanUndo);
+        RedoCommand = new RelayCommand(_ => Redo(), _ => CanRedo);
+        SaveSetupCommand = new RelayCommand(_ => ExecuteSaveSetup());
+        LoadSetupCommand = new RelayCommand(_ => ExecuteLoadSetup());
+        _toastTimer = new DispatcherTimer
         {
-            _uiDispatcher = Dispatcher.CurrentDispatcher;
-            _layerManager = new LayerManager();
-            _layerManager.LayersChanged += OnLayersChanged;
-            _layerManager.SelectionChanged += OnSelectionChanged;
+            Interval = TimeSpan.FromSeconds(3)
+        };
+        _toastTimer.Tick += OnToastTimerTick;
 
-            AddLayerCommand = new RelayCommand(_ => AddTextLayer());
-            AddImageLayerCommand = new RelayCommand(_ => ExecuteAddImageLayer());
-            ReplaceImageCommand = new RelayCommand(_ => ExecuteReplaceSelectedImage(), _ => IsImageLayerSelected);
-            DeleteLayerCommand = new RelayCommand(_ => DeleteLayer(), _ => SelectedLayer != null);
-            MoveLayerUpCommand = new RelayCommand(_ => MoveLayerUp(), _ => CanMoveLayerUp());
-            MoveLayerDownCommand = new RelayCommand(_ => MoveLayerDown(), _ => CanMoveLayerDown());
-            ToggleSpoutCommand = new RelayCommand(_ => ToggleSpout());
-            UndoCommand = new RelayCommand(_ => Undo(), _ => CanUndo);
-            RedoCommand = new RelayCommand(_ => Redo(), _ => CanRedo);
-            SaveSetupCommand = new RelayCommand(_ => ExecuteSaveSetup());
-            LoadSetupCommand = new RelayCommand(_ => ExecuteLoadSetup());
-            ChangeLanguageCommand = new RelayCommand(param => ExecuteChangeLanguage(param));
-            _sessionPersistenceService = new SessionPersistenceService();
-            _toastTimer = new DispatcherTimer
-            {
-                Interval = TimeSpan.FromSeconds(3)
-            };
-            _toastTimer.Tick += OnToastTimerTick;
+        InitializeRenderer();
+        InitializePreview();
+        InitializeSpout();
+        TryLoadDefaultSession();
+    }
 
-            InitializeRenderer();
-            InitializePreview();
-            InitializeSpout();
-            TryLoadDefaultSession();
-        }
+    private void InitializeRenderer()
+    {
+        _renderer = new TextLayerRenderer(1920, 1080);
+    }
 
-        private void InitializeRenderer()
+    private void InitializePreview()
+    {
+        _previewBitmap = new RenderTargetBitmap(1920, 1080, 96, 96, PixelFormats.Pbgra32);
+        OnPropertyChanged(nameof(PreviewBitmap));
+    }
+
+    private void InitializeSpout()
+    {
+        try
         {
-            _renderer = new TextLayerRenderer(1920, 1080);
+            _spoutManager = new SpoutOutputManager(1920, 1080);
+            _spoutEnabled = false;
         }
-
-        private void InitializePreview()
+        catch (Exception ex)
         {
-            _previewBitmap = new RenderTargetBitmap(1920, 1080, 96, 96, PixelFormats.Pbgra32);
-            OnPropertyChanged(nameof(PreviewBitmap));
+            Debug.WriteLine($"Failed to initialize Spout: {ex.Message}");
+            _spoutManager = null;
         }
-
-        private void InitializeSpout()
-        {
-            try
-            {
-                _spoutManager = new SpoutOutputManager(1920, 1080);
-                _spoutEnabled = false;
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Failed to initialize Spout: {ex.Message}");
-                _spoutManager = null;
-            }
-        }
+    }
         
-        public ObservableCollection<LayerBase> Layers => _layerManager.Layers;
+    public ObservableCollection<LayerBase> Layers => _layerManager.Layers;
         
-        public bool SpoutEnabled
+    public bool SpoutEnabled
+    {
+        get => _spoutEnabled;
+        private set
         {
-            get => _spoutEnabled;
-            private set
-            {
-                if (_spoutEnabled == value) return;
-                _spoutEnabled = value;
-                OnPropertyChanged();
-            }
+            if (_spoutEnabled == value) return;
+            _spoutEnabled = value;
+            OnPropertyChanged();
         }
+    }
         
-        public string ToastMessage
+    public string ToastMessage
+    {
+        get => _toastMessage;
+        private set
         {
-            get => _toastMessage;
-            private set
-            {
-                if (_toastMessage == value) return;
-                _toastMessage = value;
-                OnPropertyChanged();
-            }
+            if (_toastMessage == value) return;
+            _toastMessage = value;
+            OnPropertyChanged();
         }
+    }
         
-        public bool IsToastVisible
+    public bool IsToastVisible
+    {
+        get => _isToastVisible;
+        private set
         {
-            get => _isToastVisible;
-            private set
-            {
-                if (_isToastVisible == value) return;
-                _isToastVisible = value;
-                OnPropertyChanged();
-            }
+            if (_isToastVisible == value) return;
+            _isToastVisible = value;
+            OnPropertyChanged();
         }
+    }
         
-        public bool ToastIsError
+    public bool ToastIsError
+    {
+        get => _toastIsError;
+        private set
         {
-            get => _toastIsError;
-            private set
-            {
-                if (_toastIsError == value) return;
-                _toastIsError = value;
-                OnPropertyChanged();
-            }
+            if (_toastIsError == value) return;
+            _toastIsError = value;
+            OnPropertyChanged();
         }
+    }
         
-        public LayerBase? SelectedLayer
+    public LayerBase? SelectedLayer
+    {
+        get => _selectedLayer;
+        set
         {
-            get => _selectedLayer;
-            set
+            if (_selectedLayer == value) return;
+            _selectedLayer = value;
+            if (value != null)
             {
-                if (_selectedLayer == value) return;
-                _selectedLayer = value;
-                if (value != null)
-                {
-                    _layerManager.SelectLayer(value);
-                }
-
-                UpdateSelectedLayerProperties();
-                OnPropertyChanged();
-                OnPropertyChanged(nameof(IsTextLayerSelected));
-                OnPropertyChanged(nameof(IsImageLayerSelected));
-                CommandManager.InvalidateRequerySuggested();
+                _layerManager.SelectLayer(value);
             }
+
+            UpdateSelectedLayerProperties();
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(IsTextLayerSelected));
+            OnPropertyChanged(nameof(IsImageLayerSelected));
+            CommandManager.InvalidateRequerySuggested();
         }
+    }
         
-        public bool IsTextLayerSelected => _selectedLayer is TextLayer;
+    public bool IsTextLayerSelected => _selectedLayer is TextLayer;
         
-        public bool IsImageLayerSelected => _selectedLayer is ImageLayer;
+    public bool IsImageLayerSelected => _selectedLayer is ImageLayer;
 
-        public bool IsSnappingEnabled
+    public bool IsSnappingEnabled
+    {
+        get => _isSnappingEnabled;
+        set
         {
-            get => _isSnappingEnabled;
-            set
-            {
-                if (_isSnappingEnabled == value) return;
-                _isSnappingEnabled = value;
-                OnPropertyChanged();
-            }
+            if (_isSnappingEnabled == value) return;
+            _isSnappingEnabled = value;
+            OnPropertyChanged();
         }
+    }
 
-        #region Selected Layer Properties
+    #region Selected Layer Properties
 
-        public string SelectedText
+    public string SelectedText
+    {
+        get => _selectedText;
+        set
         {
-            get => _selectedText;
-            set
-            {
-                if (_selectedText == value || _selectedLayer is not TextLayer textLayer) return;
-                PushUndoSnapshot();
-                _selectedText = value;
-                textLayer.Text = value;
-                OnPropertyChanged();
-                RefreshPreview();
-            }
+            if (_selectedText == value || _selectedLayer is not TextLayer textLayer) return;
+            PushUndoSnapshot();
+            _selectedText = value;
+            textLayer.Text = value;
+            OnPropertyChanged();
+            RefreshPreview();
         }
+    }
 
-        public string SelectedFontFamily
+    public string SelectedFontFamily
+    {
+        get => _selectedFontFamily;
+        set
         {
-            get => _selectedFontFamily;
-            set
-            {
-                if (_selectedFontFamily == value || _selectedLayer is not TextLayer textLayer) return;
-                PushUndoSnapshot();
-                _selectedFontFamily = value;
-                textLayer.FontFamily = value;
-                OnPropertyChanged();
-                RefreshPreview();
-            }
+            if (_selectedFontFamily == value || _selectedLayer is not TextLayer textLayer) return;
+            PushUndoSnapshot();
+            _selectedFontFamily = value;
+            textLayer.FontFamily = value;
+            OnPropertyChanged();
+            RefreshPreview();
         }
+    }
 
-        public double SelectedFontSize
+    public double SelectedFontSize
+    {
+        get => _selectedFontSize;
+        set
         {
-            get => _selectedFontSize;
-            set
-            {
-                value = Math.Clamp(value, MinFontSize, MaxFontSize);
-                if (!(Math.Abs(_selectedFontSize - value) > 0.01) || _selectedLayer is not TextLayer textLayer) return;
-                RecordPropertyUndo();
-                _selectedFontSize = value;
-                textLayer.FontSize = value;
-                OnPropertyChanged();
-                RefreshPreview();
-            }
+            value = Math.Clamp(value, MinFontSize, MaxFontSize);
+            if (!(Math.Abs(_selectedFontSize - value) > 0.01) || _selectedLayer is not TextLayer textLayer) return;
+            RecordPropertyUndo();
+            _selectedFontSize = value;
+            textLayer.FontSize = value;
+            OnPropertyChanged();
+            RefreshPreview();
         }
+    }
 
-        public double SelectedLineHeight
+    public double SelectedLineHeight
+    {
+        get => _selectedLineHeight;
+        set
         {
-            get => _selectedLineHeight;
-            set
-            {
-                value = Math.Clamp(value, MinLineHeightMultiplier, MaxLineHeightMultiplier);
-                if (!(Math.Abs(_selectedLineHeight - value) > 0.001) || _selectedLayer is not TextLayer textLayer) return;
-                RecordPropertyUndo();
-                _selectedLineHeight = value;
-                textLayer.LineHeightMultiplier = value;
-                OnPropertyChanged();
-                RefreshPreview();
-            }
+            value = Math.Clamp(value, MinLineHeightMultiplier, MaxLineHeightMultiplier);
+            if (!(Math.Abs(_selectedLineHeight - value) > 0.001) || _selectedLayer is not TextLayer textLayer) return;
+            RecordPropertyUndo();
+            _selectedLineHeight = value;
+            textLayer.LineHeightMultiplier = value;
+            OnPropertyChanged();
+            RefreshPreview();
         }
+    }
 
-        public string SelectedTextAlignment
+    public string SelectedTextAlignment
+    {
+        get => _selectedTextAlignment;
+        set
         {
-            get => _selectedTextAlignment;
-            set
+            if (_selectedTextAlignment == value || _selectedLayer is not TextLayer textLayer) return;
+
+            TextAlignment parsedAlignment = ParseTextAlignment(value);
+            if (textLayer.TextAlignment == parsedAlignment)
             {
-                if (_selectedTextAlignment == value || _selectedLayer is not TextLayer textLayer) return;
-
-                TextAlignment parsedAlignment = ParseTextAlignment(value);
-                if (textLayer.TextAlignment == parsedAlignment)
-                {
-                    _selectedTextAlignment = parsedAlignment.ToString();
-                    OnPropertyChanged();
-                    return;
-                }
-
-                PushUndoSnapshot();
                 _selectedTextAlignment = parsedAlignment.ToString();
-                textLayer.TextAlignment = parsedAlignment;
                 OnPropertyChanged();
-                OnPropertyChanged(nameof(IsTextAlignLeft));
-                OnPropertyChanged(nameof(IsTextAlignCenter));
-                OnPropertyChanged(nameof(IsTextAlignRight));
-                RefreshPreview();
+                return;
             }
-        }
 
-        public bool IsTextAlignLeft
+            PushUndoSnapshot();
+            _selectedTextAlignment = parsedAlignment.ToString();
+            textLayer.TextAlignment = parsedAlignment;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(IsTextAlignLeft));
+            OnPropertyChanged(nameof(IsTextAlignCenter));
+            OnPropertyChanged(nameof(IsTextAlignRight));
+            RefreshPreview();
+        }
+    }
+
+    public bool IsTextAlignLeft
+    {
+        get => string.Equals(_selectedTextAlignment, nameof(TextAlignment.Left), StringComparison.OrdinalIgnoreCase);
+        set
         {
-            get => string.Equals(_selectedTextAlignment, nameof(TextAlignment.Left), StringComparison.OrdinalIgnoreCase);
-            set
+            if (!value)
             {
-                if (!value)
-                {
-                    return;
-                }
-
-                SelectedTextAlignment = nameof(TextAlignment.Left);
+                return;
             }
-        }
 
-        public bool IsTextAlignCenter
+            SelectedTextAlignment = nameof(TextAlignment.Left);
+        }
+    }
+
+    public bool IsTextAlignCenter
+    {
+        get => string.Equals(_selectedTextAlignment, nameof(TextAlignment.Center), StringComparison.OrdinalIgnoreCase);
+        set
         {
-            get => string.Equals(_selectedTextAlignment, nameof(TextAlignment.Center), StringComparison.OrdinalIgnoreCase);
-            set
+            if (!value)
             {
-                if (!value)
-                {
-                    return;
-                }
-
-                SelectedTextAlignment = nameof(TextAlignment.Center);
+                return;
             }
-        }
 
-        public bool IsTextAlignRight
+            SelectedTextAlignment = nameof(TextAlignment.Center);
+        }
+    }
+
+    public bool IsTextAlignRight
+    {
+        get => string.Equals(_selectedTextAlignment, nameof(TextAlignment.Right), StringComparison.OrdinalIgnoreCase);
+        set
         {
-            get => string.Equals(_selectedTextAlignment, nameof(TextAlignment.Right), StringComparison.OrdinalIgnoreCase);
-            set
+            if (!value)
             {
-                if (!value)
-                {
-                    return;
-                }
-
-                SelectedTextAlignment = nameof(TextAlignment.Right);
+                return;
             }
-        }
 
-        public Color SelectedFillColor
+            SelectedTextAlignment = nameof(TextAlignment.Right);
+        }
+    }
+
+    public Color SelectedFillColor
+    {
+        get => _selectedFillColor;
+        set
         {
-            get => _selectedFillColor;
-            set
-            {
-                if (_selectedFillColor == value || _selectedLayer is not TextLayer textLayer) return;
-                PushUndoSnapshot();
-                _selectedFillColor = value;
-                textLayer.FillColor = value;
-                OnPropertyChanged();
-                RefreshPreview();
-            }
+            if (_selectedFillColor == value || _selectedLayer is not TextLayer textLayer) return;
+            PushUndoSnapshot();
+            _selectedFillColor = value;
+            textLayer.FillColor = value;
+            OnPropertyChanged();
+            RefreshPreview();
         }
+    }
 
-        public string SelectedImagePath
+    public string SelectedImagePath
+    {
+        get => _selectedImagePath;
+        set
         {
-            get => _selectedImagePath;
-            set
-            {
-                if (_selectedImagePath == value || _selectedLayer is not ImageLayer imageLayer) return;
-                PushUndoSnapshot();
-                _selectedImagePath = value;
-                imageLayer.ImagePath = value;
-                OnPropertyChanged();
-                RefreshPreview();
-            }
+            if (_selectedImagePath == value || _selectedLayer is not ImageLayer imageLayer) return;
+            PushUndoSnapshot();
+            _selectedImagePath = value;
+            imageLayer.ImagePath = value;
+            OnPropertyChanged();
+            RefreshPreview();
         }
+    }
 
-        public double SelectedPositionX
+    public double SelectedPositionX
+    {
+        get => _selectedPositionX;
+        set
         {
-            get => _selectedPositionX;
-            set
-            {
-                value = Math.Clamp(value, MinPositionX, MaxPositionX);
-                if (!(Math.Abs(_selectedPositionX - value) > 0.01) || _selectedLayer == null) return;
-                RecordPropertyUndo();
-                _selectedPositionX = value;
-                _selectedLayer.PositionX = value;
-                OnPropertyChanged();
-                RefreshPreview();
-            }
+            value = Math.Clamp(value, MinPositionX, MaxPositionX);
+            if (!(Math.Abs(_selectedPositionX - value) > 0.01) || _selectedLayer == null) return;
+            RecordPropertyUndo();
+            _selectedPositionX = value;
+            _selectedLayer.PositionX = value;
+            OnPropertyChanged();
+            RefreshPreview();
         }
+    }
 
-        public double SelectedPositionY
+    public double SelectedPositionY
+    {
+        get => _selectedPositionY;
+        set
         {
-            get => _selectedPositionY;
-            set
-            {
-                value = Math.Clamp(value, MinPositionY, MaxPositionY);
-                if (!(Math.Abs(_selectedPositionY - value) > 0.01) || _selectedLayer == null) return;
-                RecordPropertyUndo();
-                _selectedPositionY = value;
-                _selectedLayer.PositionY = value;
-                OnPropertyChanged();
-                RefreshPreview();
-            }
+            value = Math.Clamp(value, MinPositionY, MaxPositionY);
+            if (!(Math.Abs(_selectedPositionY - value) > 0.01) || _selectedLayer == null) return;
+            RecordPropertyUndo();
+            _selectedPositionY = value;
+            _selectedLayer.PositionY = value;
+            OnPropertyChanged();
+            RefreshPreview();
         }
+    }
 
-        public double SelectedScaleX
+    public double SelectedScaleX
+    {
+        get => _selectedScaleX;
+        set
         {
-            get => _selectedScaleX;
-            set
-            {
-                value = Math.Clamp(value, MinScale, MaxScale);
-                if (!(Math.Abs(_selectedScaleX - value) > 0.01) || _selectedLayer == null) return;
-                RecordPropertyUndo();
-                _selectedScaleX = value;
-                _selectedLayer.ScaleX = value;
-                OnPropertyChanged();
-                RefreshPreview();
-            }
+            value = Math.Clamp(value, MinScale, MaxScale);
+            if (!(Math.Abs(_selectedScaleX - value) > 0.01) || _selectedLayer == null) return;
+            RecordPropertyUndo();
+            _selectedScaleX = value;
+            _selectedLayer.ScaleX = value;
+            OnPropertyChanged();
+            RefreshPreview();
         }
+    }
 
-        public double SelectedScaleY
+    public double SelectedScaleY
+    {
+        get => _selectedScaleY;
+        set
         {
-            get => _selectedScaleY;
-            set
-            {
-                value = Math.Clamp(value, MinScale, MaxScale);
-                if (!(Math.Abs(_selectedScaleY - value) > 0.01) || _selectedLayer == null) return;
-                RecordPropertyUndo();
-                _selectedScaleY = value;
-                _selectedLayer.ScaleY = value;
-                OnPropertyChanged();
-                RefreshPreview();
-            }
+            value = Math.Clamp(value, MinScale, MaxScale);
+            if (!(Math.Abs(_selectedScaleY - value) > 0.01) || _selectedLayer == null) return;
+            RecordPropertyUndo();
+            _selectedScaleY = value;
+            _selectedLayer.ScaleY = value;
+            OnPropertyChanged();
+            RefreshPreview();
         }
+    }
 
-        public bool SelectedOutlineEnabled
+    public bool SelectedOutlineEnabled
+    {
+        get => _selectedOutlineEnabled;
+        set
         {
-            get => _selectedOutlineEnabled;
-            set
-            {
-                if (_selectedOutlineEnabled == value || _selectedLayer is not TextLayer textLayer) return;
-                PushUndoSnapshot();
-                _selectedOutlineEnabled = value;
-                textLayer.OutlineEnabled = value;
-                OnPropertyChanged();
-                RefreshPreview();
-            }
+            if (_selectedOutlineEnabled == value || _selectedLayer is not TextLayer textLayer) return;
+            PushUndoSnapshot();
+            _selectedOutlineEnabled = value;
+            textLayer.OutlineEnabled = value;
+            OnPropertyChanged();
+            RefreshPreview();
         }
+    }
 
-        public Color SelectedOutlineColor
+    public Color SelectedOutlineColor
+    {
+        get => _selectedOutlineColor;
+        set
         {
-            get => _selectedOutlineColor;
-            set
-            {
-                if (_selectedOutlineColor == value || _selectedLayer is not TextLayer textLayer) return;
-                PushUndoSnapshot();
-                _selectedOutlineColor = value;
-                textLayer.OutlineColor = value;
-                OnPropertyChanged();
-                RefreshPreview();
-            }
+            if (_selectedOutlineColor == value || _selectedLayer is not TextLayer textLayer) return;
+            PushUndoSnapshot();
+            _selectedOutlineColor = value;
+            textLayer.OutlineColor = value;
+            OnPropertyChanged();
+            RefreshPreview();
         }
+    }
 
-        public double SelectedOutlineThickness
+    public double SelectedOutlineThickness
+    {
+        get => _selectedOutlineThickness;
+        set
         {
-            get => _selectedOutlineThickness;
-            set
-            {
-                value = Math.Clamp(value, MinOutlineThickness, MaxOutlineThickness);
-                if (!(Math.Abs(_selectedOutlineThickness - value) > 0.01) || _selectedLayer is not TextLayer textLayer) return;
-                RecordPropertyUndo();
-                _selectedOutlineThickness = value;
-                textLayer.OutlineThickness = value;
-                OnPropertyChanged();
-                RefreshPreview();
-            }
+            value = Math.Clamp(value, MinOutlineThickness, MaxOutlineThickness);
+            if (!(Math.Abs(_selectedOutlineThickness - value) > 0.01) || _selectedLayer is not TextLayer textLayer) return;
+            RecordPropertyUndo();
+            _selectedOutlineThickness = value;
+            textLayer.OutlineThickness = value;
+            OnPropertyChanged();
+            RefreshPreview();
         }
+    }
 
-        #endregion
+    #endregion
 
-        public RenderTargetBitmap? PreviewBitmap
+    public RenderTargetBitmap? PreviewBitmap
+    {
+        get => _previewBitmap;
+        private set
         {
-            get => _previewBitmap;
-            private set
-            {
-                if (_previewBitmap == value) return;
-                _previewBitmap = value;
-                OnPropertyChanged();
-            }
+            if (_previewBitmap == value) return;
+            _previewBitmap = value;
+            OnPropertyChanged();
         }
+    }
         
-        public bool CanUndo => _undoStack.Count > 0;
+    public bool CanUndo => _undoStack.Count > 0;
         
-        public bool CanRedo => _redoStack.Count > 0;
+    public bool CanRedo => _redoStack.Count > 0;
         
-        public static IEnumerable<string> AvailableFonts
+    public static IEnumerable<string> AvailableFonts
+    {
+        get
         {
-            get
-            {
-                IOrderedEnumerable<string> fontFamilies = Fonts.SystemFontFamilies.Select(f => f.Source).OrderBy(x => x);
-                return fontFamilies;
-            }
+            IOrderedEnumerable<string> fontFamilies = Fonts.SystemFontFamilies.Select(f => f.Source).OrderBy(x => x);
+            return fontFamilies;
+        }
+    }
+
+    public static IReadOnlyList<double> FontSizePresets { get; } =
+    [
+        16,
+        24,
+        32,
+        48,
+        64,
+        96
+    ];
+
+    public static IReadOnlyList<double> LineHeightPresets { get; } =
+    [
+        0.9,
+        1.0,
+        1.15,
+        1.3,
+        1.5,
+        1.8,
+        2.0
+    ];
+
+    // Bound from XAML via the view model DataContext (ItemsSource={Binding AvailableLanguages}).
+    // ReSharper disable once MemberCanBeMadeStatic.Global
+    public IReadOnlyList<string> AvailableLanguages => LocalizationService.AvailableLanguages;
+
+    public string CurrentLanguage
+    {
+        get => LocalizationService.Instance.CurrentLanguageCode;
+        set
+        {
+            if (LocalizationService.Instance.CurrentLanguageCode == value) return;
+            LocalizationService.Instance.SetLanguage(value);
+            SessionPersistenceService.SaveLanguagePreference(value);
+            OnPropertyChanged();
+        }
+    }
+
+    private void AddTextLayer()
+    {
+        PushUndoSnapshot();
+        TextLayer layer = new($"Text {_layerManager.Layers.OfType<TextLayer>().Count() + 1}");
+        _layerManager.AddLayer(layer);
+        SelectedLayer = layer;
+    }
+
+    private void ExecuteAddImageLayer()
+    {
+        string? path = SelectImagePath();
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return;
         }
 
-        public static IReadOnlyList<string> TextAlignmentOptions { get; } =
-        [
-            nameof(TextAlignment.Left),
-            nameof(TextAlignment.Center),
-            nameof(TextAlignment.Right)
-        ];
+        PushUndoSnapshot();
+        ImageLayer layer = new(path);
+        _layerManager.AddLayer(layer);
+        SelectedLayer = layer;
+        ShowToast($"Image added: {Path.GetFileName(path)}");
+    }
 
-        public static IReadOnlyList<double> FontSizePresets { get; } =
-        [
-            16,
-            24,
-            32,
-            48,
-            64,
-            96
-        ];
-
-        public static IReadOnlyList<double> LineHeightPresets { get; } =
-        [
-            0.9,
-            1.0,
-            1.15,
-            1.3,
-            1.5,
-            1.8,
-            2.0
-        ];
-
-        public IReadOnlyList<string> AvailableLanguages => LocalizationService.Instance.AvailableLanguages;
-
-        public static Dictionary<string, string> LanguageNames => LocalizationService.LanguageNames;
-
-        public string CurrentLanguage
+    private void ExecuteReplaceSelectedImage()
+    {
+        if (_selectedLayer is not ImageLayer)
         {
-            get => LocalizationService.Instance.CurrentLanguageCode;
-            set
-            {
-                if (LocalizationService.Instance.CurrentLanguageCode == value) return;
-                LocalizationService.Instance.SetLanguage(value);
-                SessionPersistenceService.SaveLanguagePreference(value);
-                OnPropertyChanged();
-            }
+            return;
         }
 
-        private void AddTextLayer()
+        string? path = SelectImagePath();
+        if (string.IsNullOrWhiteSpace(path))
         {
-            PushUndoSnapshot();
-            TextLayer layer = new($"Text {_layerManager.Layers.OfType<TextLayer>().Count() + 1}");
-            _layerManager.AddLayer(layer);
-            SelectedLayer = layer;
+            return;
         }
 
-        private void ExecuteAddImageLayer()
+        SelectedImagePath = path;
+        ShowToast($"Image updated: {Path.GetFileName(path)}");
+    }
+
+    private static string? SelectImagePath()
+    {
+        OpenFileDialog dialog = new()
         {
-            string? path = SelectImagePath();
-            if (string.IsNullOrWhiteSpace(path))
+            Filter = "Images|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff;*.webp|All Files (*.*)|*.*",
+            CheckFileExists = true,
+            Multiselect = false
+        };
+
+        return dialog.ShowDialog() == true ? dialog.FileName : null;
+    }
+
+    private void DeleteLayer()
+    {
+        if (SelectedLayer == null) return;
+
+        PushUndoSnapshot();
+        int removedIndex = _layerManager.Layers.IndexOf(SelectedLayer);
+        _layerManager.RemoveLayer(SelectedLayer);
+
+        if (_layerManager.Layers.Count == 0)
+        {
+            SelectedLayer = null;
+            return;
+        }
+
+        int nextIndex = Math.Min(Math.Max(removedIndex, 0), _layerManager.Layers.Count - 1);
+        SelectedLayer = _layerManager.Layers[nextIndex];
+    }
+
+    private void MoveLayerUp()
+    {
+        if (SelectedLayer == null) return;
+        PushUndoSnapshot();
+        _layerManager.MoveLayerUp(SelectedLayer);
+    }
+
+    private void MoveLayerDown()
+    {
+        if (SelectedLayer == null) return;
+        PushUndoSnapshot();
+        _layerManager.MoveLayerDown(SelectedLayer);
+    }
+
+    public void ReorderLayer(LayerBase draggedLayer, LayerBase? targetLayer, bool insertAfter)
+    {
+        int fromIndex = _layerManager.Layers.IndexOf(draggedLayer);
+        if (fromIndex < 0)
+        {
+            return;
+        }
+
+        int toIndex;
+        if (targetLayer == null)
+        {
+            toIndex = _layerManager.Layers.Count - 1;
+        }
+        else
+        {
+            int targetIndex = _layerManager.Layers.IndexOf(targetLayer);
+            if (targetIndex < 0)
             {
                 return;
             }
 
-            PushUndoSnapshot();
-            ImageLayer layer = new(path);
-            _layerManager.AddLayer(layer);
-            SelectedLayer = layer;
-            ShowToast($"Image added: {Path.GetFileName(path)}");
+            int rawInsertIndex = targetIndex + (insertAfter ? 1 : 0);
+            if (fromIndex < rawInsertIndex)
+            {
+                rawInsertIndex--;
+            }
+
+            toIndex = Math.Clamp(rawInsertIndex, 0, _layerManager.Layers.Count - 1);
         }
 
-        private void ExecuteReplaceSelectedImage()
+        if (toIndex < 0)
         {
-            if (_selectedLayer is not ImageLayer)
-            {
-                return;
-            }
-
-            string? path = SelectImagePath();
-            if (string.IsNullOrWhiteSpace(path))
-            {
-                return;
-            }
-
-            SelectedImagePath = path;
-            ShowToast($"Image updated: {Path.GetFileName(path)}");
+            return;
         }
 
-        private static string? SelectImagePath()
-        {
-            OpenFileDialog dialog = new()
-            {
-                Filter = "Images|*.png;*.jpg;*.jpeg;*.bmp;*.gif;*.tif;*.tiff;*.webp|All Files (*.*)|*.*",
-                CheckFileExists = true,
-                Multiselect = false
-            };
+        PushUndoSnapshot();
+        _layerManager.MoveLayer(fromIndex, toIndex);
+        SelectedLayer = draggedLayer;
+    }
 
-            return dialog.ShowDialog() == true ? dialog.FileName : null;
+    private void UpdateSelectedLayerProperties()
+    {
+        if (_selectedLayer == null)
+        {
+            _selectedText = string.Empty;
+            _selectedFontFamily = "Arial";
+            _selectedFontSize = 48;
+            _selectedLineHeight = 1.0;
+            _selectedTextAlignment = nameof(TextAlignment.Left);
+            _selectedFillColor = Colors.White;
+            _selectedPositionX = 10;
+            _selectedPositionY = 10;
+            _selectedScaleX = 1.0;
+            _selectedScaleY = 1.0;
+            _selectedOutlineEnabled = false;
+            _selectedOutlineColor = Colors.Black;
+            _selectedOutlineThickness = 2;
+            _selectedImagePath = string.Empty;
         }
-
-        private void DeleteLayer()
+        else
         {
-            if (SelectedLayer == null) return;
+            _selectedPositionX = _selectedLayer.PositionX;
+            _selectedPositionY = _selectedLayer.PositionY;
+            _selectedScaleX = _selectedLayer.ScaleX;
+            _selectedScaleY = _selectedLayer.ScaleY;
 
-            PushUndoSnapshot();
-            int removedIndex = _layerManager.Layers.IndexOf(SelectedLayer);
-            _layerManager.RemoveLayer(SelectedLayer);
-
-            if (_layerManager.Layers.Count == 0)
+            switch (_selectedLayer)
             {
-                SelectedLayer = null;
-                return;
-            }
-
-            int nextIndex = Math.Min(Math.Max(removedIndex, 0), _layerManager.Layers.Count - 1);
-            SelectedLayer = _layerManager.Layers[nextIndex];
-        }
-
-        private void MoveLayerUp()
-        {
-            if (SelectedLayer == null) return;
-            PushUndoSnapshot();
-            _layerManager.MoveLayerUp(SelectedLayer);
-        }
-
-        private void MoveLayerDown()
-        {
-            if (SelectedLayer == null) return;
-            PushUndoSnapshot();
-            _layerManager.MoveLayerDown(SelectedLayer);
-        }
-
-        public void ReorderLayer(LayerBase draggedLayer, LayerBase? targetLayer, bool insertAfter)
-        {
-            int fromIndex = _layerManager.Layers.IndexOf(draggedLayer);
-            if (fromIndex < 0)
-            {
-                return;
-            }
-
-            int toIndex;
-            if (targetLayer == null)
-            {
-                toIndex = _layerManager.Layers.Count - 1;
-            }
-            else
-            {
-                int targetIndex = _layerManager.Layers.IndexOf(targetLayer);
-                if (targetIndex < 0)
-                {
-                    return;
-                }
-
-                int rawInsertIndex = targetIndex + (insertAfter ? 1 : 0);
-                if (fromIndex < rawInsertIndex)
-                {
-                    rawInsertIndex--;
-                }
-
-                toIndex = Math.Clamp(rawInsertIndex, 0, _layerManager.Layers.Count - 1);
-            }
-
-            if (toIndex < 0)
-            {
-                return;
-            }
-
-            PushUndoSnapshot();
-            _layerManager.MoveLayer(fromIndex, toIndex);
-            SelectedLayer = draggedLayer;
-        }
-
-        private void UpdateSelectedLayerProperties()
-        {
-            if (_selectedLayer == null)
-            {
-                _selectedText = string.Empty;
-                _selectedFontFamily = "Arial";
-                _selectedFontSize = 48;
-                _selectedLineHeight = 1.0;
-                _selectedTextAlignment = nameof(TextAlignment.Left);
-                _selectedFillColor = Colors.White;
-                _selectedPositionX = 10;
-                _selectedPositionY = 10;
-                _selectedScaleX = 1.0;
-                _selectedScaleY = 1.0;
-                _selectedOutlineEnabled = false;
-                _selectedOutlineColor = Colors.Black;
-                _selectedOutlineThickness = 2;
-                _selectedImagePath = string.Empty;
-            }
-            else
-            {
-                _selectedPositionX = _selectedLayer.PositionX;
-                _selectedPositionY = _selectedLayer.PositionY;
-                _selectedScaleX = _selectedLayer.ScaleX;
-                _selectedScaleY = _selectedLayer.ScaleY;
-
-                if (_selectedLayer is TextLayer textLayer)
-                {
+                case TextLayer textLayer:
                     _selectedText = textLayer.Text;
                     _selectedFontFamily = textLayer.FontFamily;
                     _selectedFontSize = textLayer.FontSize;
@@ -713,9 +703,8 @@ namespace SimpleSpoutOverlay.UI.ViewModels
                     _selectedOutlineColor = textLayer.OutlineColor;
                     _selectedOutlineThickness = textLayer.OutlineThickness;
                     _selectedImagePath = string.Empty;
-                }
-                else if (_selectedLayer is ImageLayer imageLayer)
-                {
+                    break;
+                case ImageLayer imageLayer:
                     _selectedText = string.Empty;
                     _selectedFontFamily = "Arial";
                     _selectedFontSize = 48;
@@ -726,656 +715,645 @@ namespace SimpleSpoutOverlay.UI.ViewModels
                     _selectedOutlineColor = Colors.Black;
                     _selectedOutlineThickness = 2;
                     _selectedImagePath = imageLayer.ImagePath;
-                }
+                    break;
             }
-
-            OnPropertyChanged(nameof(SelectedText));
-            OnPropertyChanged(nameof(SelectedFontFamily));
-            OnPropertyChanged(nameof(SelectedFontSize));
-            OnPropertyChanged(nameof(SelectedLineHeight));
-            OnPropertyChanged(nameof(SelectedTextAlignment));
-            OnPropertyChanged(nameof(IsTextAlignLeft));
-            OnPropertyChanged(nameof(IsTextAlignCenter));
-            OnPropertyChanged(nameof(IsTextAlignRight));
-            OnPropertyChanged(nameof(SelectedFillColor));
-            OnPropertyChanged(nameof(SelectedPositionX));
-            OnPropertyChanged(nameof(SelectedPositionY));
-            OnPropertyChanged(nameof(SelectedScaleX));
-            OnPropertyChanged(nameof(SelectedScaleY));
-            OnPropertyChanged(nameof(SelectedOutlineEnabled));
-            OnPropertyChanged(nameof(SelectedOutlineColor));
-            OnPropertyChanged(nameof(SelectedOutlineThickness));
-            OnPropertyChanged(nameof(SelectedImagePath));
-            OnPropertyChanged(nameof(IsTextLayerSelected));
-            OnPropertyChanged(nameof(IsImageLayerSelected));
         }
 
-        private void RefreshPreview()
-        {
-            if (_renderer == null || _disposed)
-            {
-                return;
-            }
+        OnPropertyChanged(nameof(SelectedText));
+        OnPropertyChanged(nameof(SelectedFontFamily));
+        OnPropertyChanged(nameof(SelectedFontSize));
+        OnPropertyChanged(nameof(SelectedLineHeight));
+        OnPropertyChanged(nameof(SelectedTextAlignment));
+        OnPropertyChanged(nameof(IsTextAlignLeft));
+        OnPropertyChanged(nameof(IsTextAlignCenter));
+        OnPropertyChanged(nameof(IsTextAlignRight));
+        OnPropertyChanged(nameof(SelectedFillColor));
+        OnPropertyChanged(nameof(SelectedPositionX));
+        OnPropertyChanged(nameof(SelectedPositionY));
+        OnPropertyChanged(nameof(SelectedScaleX));
+        OnPropertyChanged(nameof(SelectedScaleY));
+        OnPropertyChanged(nameof(SelectedOutlineEnabled));
+        OnPropertyChanged(nameof(SelectedOutlineColor));
+        OnPropertyChanged(nameof(SelectedOutlineThickness));
+        OnPropertyChanged(nameof(SelectedImagePath));
+        OnPropertyChanged(nameof(IsTextLayerSelected));
+        OnPropertyChanged(nameof(IsImageLayerSelected));
+    }
 
-            _previewRefreshPending = true;
+    private void RefreshPreview()
+    {
+        if (_renderer == null || _disposed)
+        {
+            return;
+        }
+
+        _previewRefreshPending = true;
+        QueuePreviewRefresh();
+    }
+
+    private void QueuePreviewRefresh()
+    {
+        if (_isPreviewRefreshQueued)
+        {
+            return;
+        }
+
+        _isPreviewRefreshQueued = true;
+        _uiDispatcher.BeginInvoke(DispatcherPriority.Render, new Action(ProcessQueuedPreviewRefresh));
+    }
+
+    private void ProcessQueuedPreviewRefresh()
+    {
+        _isPreviewRefreshQueued = false;
+
+        if (!_previewRefreshPending || _renderer == null || _disposed)
+        {
+            return;
+        }
+
+        if (_isRenderingPreview)
+        {
             QueuePreviewRefresh();
+            return;
         }
 
-        private void QueuePreviewRefresh()
+        _previewRefreshPending = false;
+        _isRenderingPreview = true;
+        try
         {
-            if (_isPreviewRefreshQueued)
-            {
-                return;
-            }
+            RenderTargetBitmap bitmap = _renderer.RenderLayers(_layerManager.Layers);
+            PreviewBitmap = bitmap;
 
-            _isPreviewRefreshQueued = true;
-            _uiDispatcher.BeginInvoke(DispatcherPriority.Render, new Action(ProcessQueuedPreviewRefresh));
-        }
-
-        private void ProcessQueuedPreviewRefresh()
-        {
-            _isPreviewRefreshQueued = false;
-
-            if (!_previewRefreshPending || _renderer == null || _disposed)
-            {
-                return;
-            }
-
-            if (_isRenderingPreview)
-            {
-                QueuePreviewRefresh();
-                return;
-            }
-
-            _previewRefreshPending = false;
-            _isRenderingPreview = true;
-            try
-            {
-                RenderTargetBitmap bitmap = _renderer.RenderLayers(_layerManager.Layers);
-                PreviewBitmap = bitmap;
-
-                // Send to Spout if enabled
-                if (_spoutEnabled && _spoutManager != null)
-                {
-                    _spoutManager.SendFrame(bitmap);
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Error rendering preview: {ex.Message}");
-            }
-            finally
-            {
-                _isRenderingPreview = false;
-            }
-
-            if (_previewRefreshPending)
-            {
-                QueuePreviewRefresh();
-            }
-        }
-
-        private void PushUndoSnapshot()
-        {
-            if (_suppressHistory)
-            {
-                return;
-            }
-
-            _undoStack.Push(CloneSessionState(CaptureSessionState()));
-            _redoStack.Clear();
-            NotifyHistoryStateChanged();
-        }
-
-        private void RecordPropertyUndo()
-        {
-            if (_isSliderUndoGestureActive)
-            {
-                return;
-            }
-
-            PushUndoSnapshot();
-        }
-
-        public void BeginSliderUndoGesture()
-        {
-            if (_suppressHistory || _isSliderUndoGestureActive)
-            {
-                return;
-            }
-
-            _sliderUndoSnapshot = CloneSessionState(CaptureSessionState());
-            _isSliderUndoGestureActive = true;
-        }
-
-        public void CommitSliderUndoGesture()
-        {
-            if (!_isSliderUndoGestureActive)
-            {
-                return;
-            }
-
-            SessionState? initialSnapshot = _sliderUndoSnapshot;
-            _sliderUndoSnapshot = null;
-            _isSliderUndoGestureActive = false;
-
-            if (initialSnapshot == null)
-            {
-                return;
-            }
-
-            SessionState currentSnapshot = CaptureSessionState();
-            if (AreSessionStatesEquivalent(initialSnapshot, currentSnapshot))
-            {
-                return;
-            }
-
-            _undoStack.Push(initialSnapshot);
-            _redoStack.Clear();
-            NotifyHistoryStateChanged();
-        }
-
-        public void CancelSliderUndoGesture()
-        {
-            _sliderUndoSnapshot = null;
-            _isSliderUndoGestureActive = false;
-        }
-
-        private void Undo()
-        {
-            if (!CanUndo)
-            {
-                return;
-            }
-
-            _redoStack.Push(CloneSessionState(CaptureSessionState()));
-            SessionState previous = _undoStack.Pop();
-            RestoreSessionState(previous, clearHistory: false);
-            NotifyHistoryStateChanged();
-        }
-
-        private void Redo()
-        {
-            if (!CanRedo)
-            {
-                return;
-            }
-
-            _undoStack.Push(CloneSessionState(CaptureSessionState()));
-            SessionState next = _redoStack.Pop();
-            RestoreSessionState(next, clearHistory: false);
-            NotifyHistoryStateChanged();
-        }
-
-        private void NotifyHistoryStateChanged()
-        {
-            OnPropertyChanged(nameof(CanUndo));
-            OnPropertyChanged(nameof(CanRedo));
-            CommandManager.InvalidateRequerySuggested();
-        }
-
-        private static SessionState CloneSessionState(SessionState source)
-        {
-            return new SessionState
-            {
-                Version = source.Version,
-                SelectedLayerIndex = source.SelectedLayerIndex,
-                IsSnappingEnabled = source.IsSnappingEnabled,
-                Layers = source.Layers
-                    .Select(layer => new LayerState
-                    {
-                        Type = layer.Type,
-                        Text = layer.Text,
-                        FontFamily = layer.FontFamily,
-                        FontSize = layer.FontSize,
-                        LineHeightMultiplier = layer.LineHeightMultiplier,
-                        TextAlignment = layer.TextAlignment,
-                        FillColor = layer.FillColor,
-                        PositionX = layer.PositionX,
-                        PositionY = layer.PositionY,
-                        ScaleX = layer.ScaleX,
-                        ScaleY = layer.ScaleY,
-                        OutlineEnabled = layer.OutlineEnabled,
-                        OutlineColor = layer.OutlineColor,
-                        OutlineThickness = layer.OutlineThickness,
-                        ImagePath = layer.ImagePath
-                    })
-                    .ToList()
-            };
-        }
-
-        private static bool AreSessionStatesEquivalent(SessionState left, SessionState right)
-        {
-            if (left.SelectedLayerIndex != right.SelectedLayerIndex || left.Layers.Count != right.Layers.Count)
-            {
-                return false;
-            }
-
-            if (left.IsSnappingEnabled != right.IsSnappingEnabled)
-            {
-                return false;
-            }
-
-            for (int index = 0; index < left.Layers.Count; index++)
-            {
-                LayerState a = left.Layers[index];
-                LayerState b = right.Layers[index];
-
-                if (a.Type != b.Type ||
-                    a.Text != b.Text ||
-                    a.FontFamily != b.FontFamily ||
-                    Math.Abs(a.FontSize - b.FontSize) > 0.001 ||
-                    Math.Abs(a.LineHeightMultiplier - b.LineHeightMultiplier) > 0.001 ||
-                    a.TextAlignment != b.TextAlignment ||
-                    a.FillColor != b.FillColor ||
-                    Math.Abs(a.PositionX - b.PositionX) > 0.001 ||
-                    Math.Abs(a.PositionY - b.PositionY) > 0.001 ||
-                    Math.Abs(a.ScaleX - b.ScaleX) > 0.001 ||
-                    Math.Abs(a.ScaleY - b.ScaleY) > 0.001 ||
-                    a.OutlineEnabled != b.OutlineEnabled ||
-                    a.OutlineColor != b.OutlineColor ||
-                    Math.Abs(a.OutlineThickness - b.OutlineThickness) > 0.001 ||
-                    a.ImagePath != b.ImagePath)
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        private bool CanMoveLayerUp()
-        {
-            if (SelectedLayer == null)
-            {
-                return false;
-            }
-
-            return _layerManager.Layers.IndexOf(SelectedLayer) > 0;
-        }
-
-        private bool CanMoveLayerDown()
-        {
-            if (SelectedLayer == null)
-            {
-                return false;
-            }
-
-            int index = _layerManager.Layers.IndexOf(SelectedLayer);
-            return index >= 0 && index < _layerManager.Layers.Count - 1;
-        }
-
-        private void ToggleSpout()
-        {
-            if (_spoutManager == null)
-            {
-                return;
-            }
-
-            if (_spoutEnabled)
-            {
-                // Disable Spout
-                _spoutManager.Shutdown();
-                SpoutEnabled = false;
-            }
-            else
-            {
-                // Enable Spout
-                if (_spoutManager.Initialize())
-                {
-                    SpoutEnabled = true;
-                    // Send current frame
-                    if (_previewBitmap != null)
-                    {
-                        _spoutManager.SendFrame(_previewBitmap);
-                    }
-                }
-                else
-                {
-                    Debug.WriteLine("Failed to initialize Spout output");
-                }
-            }
-        }
-
-        private void ExecuteSaveSetup()
-        {
-            string defaultFileName = $"simplespoutoverlay-{DateTime.Now:yyyyMMdd-HHmmss}.json";
-
-            SaveFileDialog dialog = new()
-            {
-                Filter = "SimpleSpoutOverlay Session (*.json)|*.json|All Files (*.*)|*.*",
-                DefaultExt = ".json",
-                AddExtension = true,
-                FileName = defaultFileName,
-                InitialDirectory = ResolveSetupInitialDirectory()
-            };
-
-            if (dialog.ShowDialog() != true) return;
-            try
-            {
-                SessionPersistenceService.SaveToPath(dialog.FileName, CaptureSessionState());
-                SessionPersistenceService.SaveLastSetupPath(dialog.FileName);
-                ShowToast($"Setup saved: {Path.GetFileName(dialog.FileName)}");
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Failed to save session file: {ex.Message}");
-                ShowToast("Failed to save setup file.", isError: true);
-            }
-        }
-
-        private static string ResolveSetupInitialDirectory()
-        {
-            string? lastSavedPath = SessionPersistenceService.LoadLastSetupPath();
-            if (string.IsNullOrWhiteSpace(lastSavedPath))
-                return Path.GetDirectoryName(SessionPersistenceService.DefaultSessionPath)
-                       ?? Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-            try
-            {
-                string candidateDirectory = Path.GetDirectoryName(Path.GetFullPath(lastSavedPath)) ?? string.Empty;
-                if (!string.IsNullOrWhiteSpace(candidateDirectory) && Directory.Exists(candidateDirectory))
-                {
-                    return candidateDirectory;
-                }
-            }
-            catch
-            {
-                // Ignore invalid persisted path and fall back to the default directory.
-            }
-
-            return Path.GetDirectoryName(SessionPersistenceService.DefaultSessionPath)
-                   ?? Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-        }
-
-        private void ExecuteLoadSetup()
-        {
-            OpenFileDialog dialog = new()
-            {
-                Filter = "SimpleSpoutOverlay Session (*.json)|*.json|All Files (*.*)|*.*",
-                DefaultExt = ".json",
-                CheckFileExists = true,
-                InitialDirectory = ResolveSetupInitialDirectory()
-            };
-
-            if (dialog.ShowDialog() != true) return;
-            try
-            {
-                SessionState? state = SessionPersistenceService.LoadFromPath(dialog.FileName);
-                if (state != null)
-                {
-                    PushUndoSnapshot();
-                    RestoreSessionState(state);
-                    SessionPersistenceService.SaveLastSetupPath(dialog.FileName);
-                    ShowToast($"Setup loaded: {Path.GetFileName(dialog.FileName)}");
-                }
-                else
-                {
-                    ShowToast("Invalid or empty setup file.", isError: true);
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Failed to load session file: {ex.Message}");
-                ShowToast("Failed to load setup file.", isError: true);
-            }
-        }
-
-        private void TryLoadDefaultSession()
-        {
-            try
-            {
-                SessionState? state = SessionPersistenceService.LoadFromPath(SessionPersistenceService.DefaultSessionPath);
-                if (state != null)
-                {
-                    RestoreSessionState(state, clearHistory: true);
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Failed to load default session: {ex.Message}");
-            }
-        }
-
-        private void ExecuteChangeLanguage(object? param)
-        {
-            if (param is string languageCode)
-            {
-                CurrentLanguage = languageCode;
-            }
-        }
-
-        private void ShowToast(string message, bool isError = false)
-        {
-            ToastMessage = message;
-            ToastIsError = isError;
-            IsToastVisible = true;
-
-            _toastTimer.Stop();
-            _toastTimer.Start();
-        }
-
-        private void OnToastTimerTick(object? sender, EventArgs e)
-        {
-            _toastTimer.Stop();
-            IsToastVisible = false;
-        }
-
-        public void SaveDefaultSession()
-        {
-            try
-            {
-                SessionPersistenceService.SaveToPath(SessionPersistenceService.DefaultSessionPath, CaptureSessionState());
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Failed to save default session: {ex.Message}");
-            }
-        }
-
-        private SessionState CaptureSessionState()
-        {
-            int selectedIndex = SelectedLayer == null ? -1 : _layerManager.Layers.IndexOf(SelectedLayer);
-
-            return new SessionState
-            {
-                Version = SessionState.CurrentVersion,
-                SelectedLayerIndex = selectedIndex,
-                IsSnappingEnabled = _isSnappingEnabled,
-                Layers = _layerManager.Layers.Select(ToLayerState).ToList()
-            };
-        }
-
-        private void RestoreSessionState(SessionState state, bool clearHistory = false)
-        {
-            bool previousSuppressHistory = _suppressHistory;
-            _suppressHistory = true;
-            try
-            {
-                _isSnappingEnabled = state.IsSnappingEnabled;
-                _layerManager.Layers.Clear();
-
-                foreach (LayerState layerState in state.Layers)
-                {
-                    _layerManager.Layers.Add(FromLayerState(layerState));
-                }
-
-                if (_layerManager.Layers.Count == 0)
-                {
-                    SelectedLayer = null;
-                }
-                else if (state.SelectedLayerIndex >= 0 && state.SelectedLayerIndex < _layerManager.Layers.Count)
-                {
-                    SelectedLayer = _layerManager.Layers[state.SelectedLayerIndex];
-                }
-                else
-                {
-                    SelectedLayer = _layerManager.Layers[0];
-                }
-            }
-            finally
-            {
-                _suppressHistory = previousSuppressHistory;
-            }
-
-            if (clearHistory)
-            {
-                _undoStack.Clear();
-                _redoStack.Clear();
-            }
-
-            NotifyHistoryStateChanged();
-            OnPropertyChanged(nameof(IsSnappingEnabled));
-
-            RefreshPreview();
-        }
-
-        private static LayerState ToLayerState(LayerBase layer)
-        {
-            return layer switch
-            {
-                TextLayer textLayer => new LayerState
-                {
-                    Type = "Text",
-                    Text = textLayer.Text,
-                    FontFamily = textLayer.FontFamily,
-                    FontSize = textLayer.FontSize,
-                    LineHeightMultiplier = textLayer.LineHeightMultiplier,
-                    TextAlignment = textLayer.TextAlignment.ToString(),
-                    FillColor = ToArgbHex(textLayer.FillColor),
-                    PositionX = textLayer.PositionX,
-                    PositionY = textLayer.PositionY,
-                    ScaleX = textLayer.ScaleX,
-                    ScaleY = textLayer.ScaleY,
-                    OutlineEnabled = textLayer.OutlineEnabled,
-                    OutlineColor = ToArgbHex(textLayer.OutlineColor),
-                    OutlineThickness = textLayer.OutlineThickness
-                },
-                ImageLayer imageLayer => new LayerState
-                {
-                    Type = "Image",
-                    PositionX = imageLayer.PositionX,
-                    PositionY = imageLayer.PositionY,
-                    ScaleX = imageLayer.ScaleX,
-                    ScaleY = imageLayer.ScaleY,
-                    ImagePath = imageLayer.ImagePath
-                },
-                _ => throw new InvalidOperationException("Unsupported layer type.")
-            };
-        }
-
-        private static LayerBase FromLayerState(LayerState state)
-        {
-            if (string.Equals(state.Type, "Image", StringComparison.OrdinalIgnoreCase))
-            {
-                return new ImageLayer(state.ImagePath)
-                {
-                    PositionX = state.PositionX,
-                    PositionY = state.PositionY,
-                    ScaleX = state.ScaleX,
-                    ScaleY = state.ScaleY
-                };
-            }
-
-            return new TextLayer(state.Text, state.FontFamily, state.FontSize)
-            {
-                LineHeightMultiplier = Math.Clamp(state.LineHeightMultiplier, MinLineHeightMultiplier, MaxLineHeightMultiplier),
-                TextAlignment = ParseTextAlignment(state.TextAlignment),
-                FillColor = ParseColor(state.FillColor, Colors.White),
-                PositionX = state.PositionX,
-                PositionY = state.PositionY,
-                ScaleX = state.ScaleX,
-                ScaleY = state.ScaleY,
-                OutlineEnabled = state.OutlineEnabled,
-                OutlineColor = ParseColor(state.OutlineColor, Colors.Black),
-                OutlineThickness = state.OutlineThickness
-            };
-        }
-
-        private static TextAlignment ParseTextAlignment(string? value)
-        {
-            if (Enum.TryParse(value, ignoreCase: true, out TextAlignment alignment)
-                && alignment is TextAlignment.Left or TextAlignment.Center or TextAlignment.Right)
-            {
-                return alignment;
-            }
-
-            return TextAlignment.Left;
-        }
-
-        private static Color ParseColor(string value, Color fallback)
-        {
-            try
-            {
-                object? converted = ColorConverter.ConvertFromString(value);
-                return converted is Color color ? color : fallback;
-            }
-            catch
-            {
-                return fallback;
-            }
-        }
-
-        private static string ToArgbHex(Color color)
-        {
-            return $"#{color.A:X2}{color.R:X2}{color.G:X2}{color.B:X2}";
-        }
-
-        private void OnLayersChanged()
-        {
-            RefreshPreview();
-        }
-
-        private void OnSelectionChanged()
-        {
-            // Preview updated via selection change in view
-        }
-
-        private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-
-        public void Dispose()
-        {
-            if (_disposed)
-                return;
-
-            SaveDefaultSession();
-
+            // Send to Spout if enabled
             if (_spoutEnabled && _spoutManager != null)
             {
-                _spoutManager.Shutdown();
+                _spoutManager.SendFrame(bitmap);
             }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Error rendering preview: {ex.Message}");
+        }
+        finally
+        {
+            _isRenderingPreview = false;
+        }
 
-            _spoutManager?.Dispose();
-            _toastTimer.Stop();
-            _toastTimer.Tick -= OnToastTimerTick;
-            _disposed = true;
-            GC.SuppressFinalize(this);
+        if (_previewRefreshPending)
+        {
+            QueuePreviewRefresh();
         }
     }
 
-    /// <summary>
-    /// Simple relay command implementation for ICommand.
-    /// </summary>
-    public class RelayCommand(Action<object?> execute, Func<object?, bool>? canExecute = null)
-        : ICommand
+    private void PushUndoSnapshot()
     {
-        public event EventHandler? CanExecuteChanged
+        if (_suppressHistory)
         {
-            add => CommandManager.RequerySuggested += value;
-            remove => CommandManager.RequerySuggested -= value;
+            return;
         }
 
-        public bool CanExecute(object? parameter)
+        _undoStack.Push(CloneSessionState(CaptureSessionState()));
+        _redoStack.Clear();
+        NotifyHistoryStateChanged();
+    }
+
+    private void RecordPropertyUndo()
+    {
+        if (_isSliderUndoGestureActive)
         {
-            return canExecute?.Invoke(parameter) ?? true;
+            return;
         }
 
-        public void Execute(object? parameter)
+        PushUndoSnapshot();
+    }
+
+    public void BeginSliderUndoGesture()
+    {
+        if (_suppressHistory || _isSliderUndoGestureActive)
         {
-            execute(parameter);
+            return;
         }
+
+        _sliderUndoSnapshot = CloneSessionState(CaptureSessionState());
+        _isSliderUndoGestureActive = true;
+    }
+
+    public void CommitSliderUndoGesture()
+    {
+        if (!_isSliderUndoGestureActive)
+        {
+            return;
+        }
+
+        SessionState? initialSnapshot = _sliderUndoSnapshot;
+        _sliderUndoSnapshot = null;
+        _isSliderUndoGestureActive = false;
+
+        if (initialSnapshot == null)
+        {
+            return;
+        }
+
+        SessionState currentSnapshot = CaptureSessionState();
+        if (AreSessionStatesEquivalent(initialSnapshot, currentSnapshot))
+        {
+            return;
+        }
+
+        _undoStack.Push(initialSnapshot);
+        _redoStack.Clear();
+        NotifyHistoryStateChanged();
+    }
+
+    public void CancelSliderUndoGesture()
+    {
+        _sliderUndoSnapshot = null;
+        _isSliderUndoGestureActive = false;
+    }
+
+    private void Undo()
+    {
+        if (!CanUndo)
+        {
+            return;
+        }
+
+        _redoStack.Push(CloneSessionState(CaptureSessionState()));
+        SessionState previous = _undoStack.Pop();
+        RestoreSessionState(previous, clearHistory: false);
+        NotifyHistoryStateChanged();
+    }
+
+    private void Redo()
+    {
+        if (!CanRedo)
+        {
+            return;
+        }
+
+        _undoStack.Push(CloneSessionState(CaptureSessionState()));
+        SessionState next = _redoStack.Pop();
+        RestoreSessionState(next, clearHistory: false);
+        NotifyHistoryStateChanged();
+    }
+
+    private void NotifyHistoryStateChanged()
+    {
+        OnPropertyChanged(nameof(CanUndo));
+        OnPropertyChanged(nameof(CanRedo));
+        CommandManager.InvalidateRequerySuggested();
+    }
+
+    private static SessionState CloneSessionState(SessionState source)
+    {
+        return new SessionState
+        {
+            Version = source.Version,
+            SelectedLayerIndex = source.SelectedLayerIndex,
+            IsSnappingEnabled = source.IsSnappingEnabled,
+            Layers = source.Layers
+                .Select(layer => new LayerState
+                {
+                    Type = layer.Type,
+                    Text = layer.Text,
+                    FontFamily = layer.FontFamily,
+                    FontSize = layer.FontSize,
+                    LineHeightMultiplier = layer.LineHeightMultiplier,
+                    TextAlignment = layer.TextAlignment,
+                    FillColor = layer.FillColor,
+                    PositionX = layer.PositionX,
+                    PositionY = layer.PositionY,
+                    ScaleX = layer.ScaleX,
+                    ScaleY = layer.ScaleY,
+                    OutlineEnabled = layer.OutlineEnabled,
+                    OutlineColor = layer.OutlineColor,
+                    OutlineThickness = layer.OutlineThickness,
+                    ImagePath = layer.ImagePath
+                })
+                .ToList()
+        };
+    }
+
+    private static bool AreSessionStatesEquivalent(SessionState left, SessionState right)
+    {
+        if (left.SelectedLayerIndex != right.SelectedLayerIndex || left.Layers.Count != right.Layers.Count)
+        {
+            return false;
+        }
+
+        if (left.IsSnappingEnabled != right.IsSnappingEnabled)
+        {
+            return false;
+        }
+
+        for (int index = 0; index < left.Layers.Count; index++)
+        {
+            LayerState a = left.Layers[index];
+            LayerState b = right.Layers[index];
+
+            if (a.Type != b.Type ||
+                a.Text != b.Text ||
+                a.FontFamily != b.FontFamily ||
+                Math.Abs(a.FontSize - b.FontSize) > 0.001 ||
+                Math.Abs(a.LineHeightMultiplier - b.LineHeightMultiplier) > 0.001 ||
+                a.TextAlignment != b.TextAlignment ||
+                a.FillColor != b.FillColor ||
+                Math.Abs(a.PositionX - b.PositionX) > 0.001 ||
+                Math.Abs(a.PositionY - b.PositionY) > 0.001 ||
+                Math.Abs(a.ScaleX - b.ScaleX) > 0.001 ||
+                Math.Abs(a.ScaleY - b.ScaleY) > 0.001 ||
+                a.OutlineEnabled != b.OutlineEnabled ||
+                a.OutlineColor != b.OutlineColor ||
+                Math.Abs(a.OutlineThickness - b.OutlineThickness) > 0.001 ||
+                a.ImagePath != b.ImagePath)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private bool CanMoveLayerUp()
+    {
+        if (SelectedLayer == null)
+        {
+            return false;
+        }
+
+        return _layerManager.Layers.IndexOf(SelectedLayer) > 0;
+    }
+
+    private bool CanMoveLayerDown()
+    {
+        if (SelectedLayer == null)
+        {
+            return false;
+        }
+
+        int index = _layerManager.Layers.IndexOf(SelectedLayer);
+        return index >= 0 && index < _layerManager.Layers.Count - 1;
+    }
+
+    private void ToggleSpout()
+    {
+        if (_spoutManager == null)
+        {
+            return;
+        }
+
+        if (_spoutEnabled)
+        {
+            // Disable Spout
+            _spoutManager.Shutdown();
+            SpoutEnabled = false;
+        }
+        else
+        {
+            // Enable Spout
+            if (_spoutManager.Initialize())
+            {
+                SpoutEnabled = true;
+                // Send current frame
+                if (_previewBitmap != null)
+                {
+                    _spoutManager.SendFrame(_previewBitmap);
+                }
+            }
+            else
+            {
+                Debug.WriteLine("Failed to initialize Spout output");
+            }
+        }
+    }
+
+    private void ExecuteSaveSetup()
+    {
+        string defaultFileName = $"simplespoutoverlay-{DateTime.Now:yyyyMMdd-HHmmss}.json";
+
+        SaveFileDialog dialog = new()
+        {
+            Filter = "SimpleSpoutOverlay Session (*.json)|*.json|All Files (*.*)|*.*",
+            DefaultExt = ".json",
+            AddExtension = true,
+            FileName = defaultFileName,
+            InitialDirectory = ResolveSetupInitialDirectory()
+        };
+
+        if (dialog.ShowDialog() != true) return;
+        try
+        {
+            SessionPersistenceService.SaveToPath(dialog.FileName, CaptureSessionState());
+            SessionPersistenceService.SaveLastSetupPath(dialog.FileName);
+            ShowToast($"Setup saved: {Path.GetFileName(dialog.FileName)}");
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Failed to save session file: {ex.Message}");
+            ShowToast("Failed to save setup file.", isError: true);
+        }
+    }
+
+    private static string ResolveSetupInitialDirectory()
+    {
+        string? lastSavedPath = SessionPersistenceService.LoadLastSetupPath();
+        if (string.IsNullOrWhiteSpace(lastSavedPath))
+            return Path.GetDirectoryName(SessionPersistenceService.DefaultSessionPath)
+                   ?? Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+        try
+        {
+            string candidateDirectory = Path.GetDirectoryName(Path.GetFullPath(lastSavedPath)) ?? string.Empty;
+            if (!string.IsNullOrWhiteSpace(candidateDirectory) && Directory.Exists(candidateDirectory))
+            {
+                return candidateDirectory;
+            }
+        }
+        catch
+        {
+            // Ignore invalid persisted path and fall back to the default directory.
+        }
+
+        return Path.GetDirectoryName(SessionPersistenceService.DefaultSessionPath)
+               ?? Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+    }
+
+    private void ExecuteLoadSetup()
+    {
+        OpenFileDialog dialog = new()
+        {
+            Filter = "SimpleSpoutOverlay Session (*.json)|*.json|All Files (*.*)|*.*",
+            DefaultExt = ".json",
+            CheckFileExists = true,
+            InitialDirectory = ResolveSetupInitialDirectory()
+        };
+
+        if (dialog.ShowDialog() != true) return;
+        try
+        {
+            SessionState? state = SessionPersistenceService.LoadFromPath(dialog.FileName);
+            if (state != null)
+            {
+                PushUndoSnapshot();
+                RestoreSessionState(state);
+                SessionPersistenceService.SaveLastSetupPath(dialog.FileName);
+                ShowToast($"Setup loaded: {Path.GetFileName(dialog.FileName)}");
+            }
+            else
+            {
+                ShowToast("Invalid or empty setup file.", isError: true);
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Failed to load session file: {ex.Message}");
+            ShowToast("Failed to load setup file.", isError: true);
+        }
+    }
+
+    private void TryLoadDefaultSession()
+    {
+        try
+        {
+            SessionState? state = SessionPersistenceService.LoadFromPath(SessionPersistenceService.DefaultSessionPath);
+            if (state != null)
+            {
+                RestoreSessionState(state, clearHistory: true);
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Failed to load default session: {ex.Message}");
+        }
+    }
+
+    private void ShowToast(string message, bool isError = false)
+    {
+        ToastMessage = message;
+        ToastIsError = isError;
+        IsToastVisible = true;
+
+        _toastTimer.Stop();
+        _toastTimer.Start();
+    }
+
+    private void OnToastTimerTick(object? sender, EventArgs e)
+    {
+        _toastTimer.Stop();
+        IsToastVisible = false;
+    }
+
+    private void SaveDefaultSession()
+    {
+        try
+        {
+            SessionPersistenceService.SaveToPath(SessionPersistenceService.DefaultSessionPath, CaptureSessionState());
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Failed to save default session: {ex.Message}");
+        }
+    }
+
+    private SessionState CaptureSessionState()
+    {
+        int selectedIndex = SelectedLayer == null ? -1 : _layerManager.Layers.IndexOf(SelectedLayer);
+
+        return new SessionState
+        {
+            Version = SessionState.CurrentVersion,
+            SelectedLayerIndex = selectedIndex,
+            IsSnappingEnabled = _isSnappingEnabled,
+            Layers = _layerManager.Layers.Select(ToLayerState).ToList()
+        };
+    }
+
+    private void RestoreSessionState(SessionState state, bool clearHistory = false)
+    {
+        bool previousSuppressHistory = _suppressHistory;
+        _suppressHistory = true;
+        try
+        {
+            _isSnappingEnabled = state.IsSnappingEnabled;
+            _layerManager.Layers.Clear();
+
+            foreach (LayerState layerState in state.Layers)
+            {
+                _layerManager.Layers.Add(FromLayerState(layerState));
+            }
+
+            if (_layerManager.Layers.Count == 0)
+            {
+                SelectedLayer = null;
+            }
+            else if (state.SelectedLayerIndex >= 0 && state.SelectedLayerIndex < _layerManager.Layers.Count)
+            {
+                SelectedLayer = _layerManager.Layers[state.SelectedLayerIndex];
+            }
+            else
+            {
+                SelectedLayer = _layerManager.Layers[0];
+            }
+        }
+        finally
+        {
+            _suppressHistory = previousSuppressHistory;
+        }
+
+        if (clearHistory)
+        {
+            _undoStack.Clear();
+            _redoStack.Clear();
+        }
+
+        NotifyHistoryStateChanged();
+        OnPropertyChanged(nameof(IsSnappingEnabled));
+
+        RefreshPreview();
+    }
+
+    private static LayerState ToLayerState(LayerBase layer)
+    {
+        return layer switch
+        {
+            TextLayer textLayer => new LayerState
+            {
+                Type = "Text",
+                Text = textLayer.Text,
+                FontFamily = textLayer.FontFamily,
+                FontSize = textLayer.FontSize,
+                LineHeightMultiplier = textLayer.LineHeightMultiplier,
+                TextAlignment = textLayer.TextAlignment.ToString(),
+                FillColor = ToArgbHex(textLayer.FillColor),
+                PositionX = textLayer.PositionX,
+                PositionY = textLayer.PositionY,
+                ScaleX = textLayer.ScaleX,
+                ScaleY = textLayer.ScaleY,
+                OutlineEnabled = textLayer.OutlineEnabled,
+                OutlineColor = ToArgbHex(textLayer.OutlineColor),
+                OutlineThickness = textLayer.OutlineThickness
+            },
+            ImageLayer imageLayer => new LayerState
+            {
+                Type = "Image",
+                PositionX = imageLayer.PositionX,
+                PositionY = imageLayer.PositionY,
+                ScaleX = imageLayer.ScaleX,
+                ScaleY = imageLayer.ScaleY,
+                ImagePath = imageLayer.ImagePath
+            },
+            _ => throw new InvalidOperationException("Unsupported layer type.")
+        };
+    }
+
+    private static LayerBase FromLayerState(LayerState state)
+    {
+        if (string.Equals(state.Type, "Image", StringComparison.OrdinalIgnoreCase))
+        {
+            return new ImageLayer(state.ImagePath)
+            {
+                PositionX = state.PositionX,
+                PositionY = state.PositionY,
+                ScaleX = state.ScaleX,
+                ScaleY = state.ScaleY
+            };
+        }
+
+        return new TextLayer(state.Text, state.FontFamily, state.FontSize)
+        {
+            LineHeightMultiplier = Math.Clamp(state.LineHeightMultiplier, MinLineHeightMultiplier, MaxLineHeightMultiplier),
+            TextAlignment = ParseTextAlignment(state.TextAlignment),
+            FillColor = ParseColor(state.FillColor, Colors.White),
+            PositionX = state.PositionX,
+            PositionY = state.PositionY,
+            ScaleX = state.ScaleX,
+            ScaleY = state.ScaleY,
+            OutlineEnabled = state.OutlineEnabled,
+            OutlineColor = ParseColor(state.OutlineColor, Colors.Black),
+            OutlineThickness = state.OutlineThickness
+        };
+    }
+
+    private static TextAlignment ParseTextAlignment(string? value)
+    {
+        if (Enum.TryParse(value, ignoreCase: true, out TextAlignment alignment)
+            && alignment is TextAlignment.Left or TextAlignment.Center or TextAlignment.Right)
+        {
+            return alignment;
+        }
+
+        return TextAlignment.Left;
+    }
+
+    private static Color ParseColor(string value, Color fallback)
+    {
+        try
+        {
+            object? converted = ColorConverter.ConvertFromString(value);
+            return converted is Color color ? color : fallback;
+        }
+        catch
+        {
+            return fallback;
+        }
+    }
+
+    private static string ToArgbHex(Color color)
+    {
+        return $"#{color.A:X2}{color.R:X2}{color.G:X2}{color.B:X2}";
+    }
+
+    private void OnLayersChanged()
+    {
+        RefreshPreview();
+    }
+
+    private static void OnSelectionChanged()
+    {
+        // Preview updated via selection change in view
+    }
+
+    private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+
+    public void Dispose()
+    {
+        if (_disposed)
+            return;
+
+        SaveDefaultSession();
+
+        if (_spoutEnabled && _spoutManager != null)
+        {
+            _spoutManager.Shutdown();
+        }
+
+        _spoutManager?.Dispose();
+        _toastTimer.Stop();
+        _toastTimer.Tick -= OnToastTimerTick;
+        _disposed = true;
+    }
+}
+    
+/// Simple relay command implementation for ICommand.
+public class RelayCommand(Action<object?> execute, Func<object?, bool>? canExecute = null)
+    : ICommand
+{
+    public event EventHandler? CanExecuteChanged
+    {
+        add => CommandManager.RequerySuggested += value;
+        remove => CommandManager.RequerySuggested -= value;
+    }
+
+    public bool CanExecute(object? parameter)
+    {
+        return canExecute?.Invoke(parameter) ?? true;
+    }
+
+    public void Execute(object? parameter)
+    {
+        execute(parameter);
     }
 }
 

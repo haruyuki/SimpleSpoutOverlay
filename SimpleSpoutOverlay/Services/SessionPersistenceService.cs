@@ -5,7 +5,7 @@ using SimpleSpoutOverlay.Models;
 namespace SimpleSpoutOverlay.Services;
 
 /// Handles saving and loading session files from disk.
-public sealed class SessionPersistenceService
+public static class SessionPersistenceService
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -120,5 +120,3 @@ public sealed class SessionPersistenceService
         return string.IsNullOrWhiteSpace(value) ? "en-US" : value;
     }
 }
-
-

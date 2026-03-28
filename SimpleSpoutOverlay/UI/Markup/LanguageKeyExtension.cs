@@ -1,44 +1,19 @@
-﻿using System.Windows.Markup;
-using System.Windows.Data;
+﻿using System.Windows.Data;
+using System.Windows.Markup;
 using SimpleSpoutOverlay.Services;
 
-namespace SimpleSpoutOverlay.UI.Markup
+namespace SimpleSpoutOverlay.UI.Markup;
+
+/// Markup extension for easy access to localized strings in XAML.
+/// Usage: {local:LanguageKey Label.Layers}
+/// Shows key name in designer, uses localized text at runtime.
+public class LanguageKeyExtension(string key) : MarkupExtension
 {
-    /// <summary>
-    /// Markup extension for easy access to localized strings in XAML.
-    /// Usage: {local:LanguageKey Label.Layers}
-    /// </summary>
-    public class LanguageKeyExtension : MarkupExtension
+    [ConstructorArgument("key")] private string Key { get; } = key;
+
+    public override object ProvideValue(IServiceProvider serviceProvider)
     {
-        private string _key = string.Empty;
-
-        public LanguageKeyExtension()
-        {
-        }
-
-        public LanguageKeyExtension(string key)
-        {
-            _key = key;
-        }
-
-        [ConstructorArgument("key")]
-        public string Key
-        {
-            get => _key;
-            set => _key = value;
-        }
-
-        public override object ProvideValue(IServiceProvider serviceProvider)
-        {
-            Binding binding = new($"[{_key}]")
-            {
-                Source = LocalizationService.Instance,
-                Mode = BindingMode.OneWay
-            };
-
-            return binding.ProvideValue(serviceProvider);
-        }
+        Binding binding = LocalizationService.CreateBinding(Key, Key);
+        return binding.ProvideValue(serviceProvider);
     }
 }
-
-

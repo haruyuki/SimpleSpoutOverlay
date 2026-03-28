@@ -2,39 +2,33 @@
 using System.Windows.Data;
 using SimpleSpoutOverlay.Services;
 
-namespace SimpleSpoutOverlay.UI.Markup
+namespace SimpleSpoutOverlay.UI.Markup;
+
+/// Converts language codes to display names.
+/// Usage: {Binding ., Converter={x:Static markup:LanguageDisplayConverter.Instance}}
+public sealed class LanguageDisplayConverter : IValueConverter
 {
-    /// <summary>
-    /// Converts language codes to display names.
-    /// Usage: {Binding ., Converter={x:Static markup:LanguageDisplayConverter.Instance}}
-    /// </summary>
-    public sealed class LanguageDisplayConverter : IValueConverter
+    public static readonly LanguageDisplayConverter Instance = new();
+
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
-        public static readonly LanguageDisplayConverter Instance = new();
-
-        public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+        if (value is not string languageCode)
         {
-            if (value is not string languageCode)
-            {
-                return value ?? string.Empty;
-            }
-
-            return LocalizationService.LanguageNames.TryGetValue(languageCode, out var displayName)
-                ? displayName
-                : languageCode;
+            return value ?? string.Empty;
         }
 
-        public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
-        {
-            if (value is not string displayName)
-            {
-                return string.Empty;
-            }
+        return LocalizationService.LanguageNames.GetValueOrDefault(languageCode, languageCode);
+    }
 
-            // Reverse lookup: find language code by display name
-            var pair = LocalizationService.LanguageNames.FirstOrDefault(x => x.Value == displayName);
-            return pair.Key ?? displayName;
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is not string displayName)
+        {
+            return string.Empty;
         }
+
+        // Reverse lookup: find language code by display name
+        KeyValuePair<string, string> pair = LocalizationService.LanguageNames.FirstOrDefault(x => x.Value == displayName);
+        return pair.Key ?? displayName;
     }
 }
-

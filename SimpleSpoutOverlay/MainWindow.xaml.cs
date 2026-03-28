@@ -183,7 +183,7 @@ public partial class MainWindow
         HidePreviewLayerOutline();
     }
 
-    private LayerBase? HitTestLayer(Point point, MainWindowViewModel viewModel)
+    private static LayerBase? HitTestLayer(Point point, MainWindowViewModel viewModel)
     {
         foreach (LayerBase layer in viewModel.Layers)
         {
@@ -256,7 +256,7 @@ public partial class MainWindow
             return;
         }
 
-        Geometry? geometry = GetLayerGeometry(layer);
+        RectangleGeometry? geometry = GetLayerGeometry(layer);
         if (geometry == null)
         {
             HidePreviewLayerOutline();
@@ -290,9 +290,9 @@ public partial class MainWindow
             return (targetX, targetY);
         }
 
-        double snappedX = targetX + GetBestSnapOffset(bounds.Left, bounds.Left + (bounds.Width / 2.0), bounds.Right,
+        double snappedX = targetX + GetBestSnapOffset(bounds.Left, bounds.Left + bounds.Width / 2.0, bounds.Right,
             0, PreviewWidth / 2.0, PreviewWidth);
-        double snappedY = targetY + GetBestSnapOffset(bounds.Top, bounds.Top + (bounds.Height / 2.0), bounds.Bottom,
+        double snappedY = targetY + GetBestSnapOffset(bounds.Top, bounds.Top + bounds.Height / 2.0, bounds.Bottom,
             0, PreviewHeight / 2.0, PreviewHeight);
 
         return (snappedX, snappedY);
@@ -346,7 +346,7 @@ public partial class MainWindow
         }
     }
 
-    private static Geometry? GetLayerGeometry(LayerBase layer)
+    private static RectangleGeometry? GetLayerGeometry(LayerBase layer)
     {
         return layer switch
         {
@@ -501,6 +501,7 @@ public partial class MainWindow
             return;
         }
 
+        // ReSharper disable once SwitchStatementMissingSomeEnumCasesNoDefault
         switch (e.Key)
         {
             case Key.Up when viewModel.MoveLayerUpCommand.CanExecute(null):
@@ -631,7 +632,7 @@ public partial class MainWindow
 
             if (!(listPosition.Y <= itemBounds.Bottom)) continue;
             targetItem = item;
-            insertAfter = listPosition.Y >= itemBounds.Top + (itemBounds.Height / 2);
+            insertAfter = listPosition.Y >= itemBounds.Top + itemBounds.Height / 2;
             return true;
         }
 

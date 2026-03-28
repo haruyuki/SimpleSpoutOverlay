@@ -62,7 +62,7 @@ public partial class ColorPickerWindow
         double height = SvPickerCanvas.ActualHeight;
 
         _currentSaturation = Math.Max(0, Math.Min(1, pos.X / width));
-        _currentValue = Math.Max(0, Math.Min(1, 1 - (pos.Y / height))); // Inverted Y
+        _currentValue = Math.Max(0, Math.Min(1, 1 - pos.Y / height)); // Inverted Y
 
         UpdatePreview();
     }
@@ -107,7 +107,7 @@ public partial class ColorPickerWindow
                 for (int x = 0; x < (int)width; x++)
                 {
                     double s = x / width;
-                    double v = 1 - (y / height);
+                    double v = 1 - y / height;
 
                     Color color = HsvToRgb(_currentHue, s, v);
 
@@ -139,7 +139,7 @@ public partial class ColorPickerWindow
         double y = (1 - _currentValue) * height;
 
         // Simple circle indicator
-        Ellipse circle = new Ellipse
+        Ellipse circle = new()
         {
             Width = 10,
             Height = 10,
@@ -161,7 +161,7 @@ public partial class ColorPickerWindow
         SelectedColor = Color.FromArgb(a, color.R, color.G, color.B);
 
         PreviewRect.Fill = new SolidColorBrush(SelectedColor);
-        AlphaValueText.Text = a.ToString();
+        AlphaValueText.Text = a.ToString(CultureInfo.InvariantCulture);
 
         UpdateHexInputText(color.R, color.G, color.B);
         DrawSelectionIndicator();
@@ -202,7 +202,7 @@ public partial class ColorPickerWindow
 
     private void NormalizeHexInputText()
     {
-        if (TryParseRgbHex(HexInput.Text, out var r, out var g, out var b))
+        if (TryParseRgbHex(HexInput.Text, out byte r, out byte g, out byte b))
         {
             RgbToHsv(r, g, b, out _currentHue, out _currentSaturation, out _currentValue);
             _isUpdatingFromPicker = true;
@@ -259,15 +259,23 @@ public partial class ColorPickerWindow
         double min = Math.Min(rf, Math.Min(gf, bf));
         double delta = max - min;
 
-        // Hue
+        // Hue - determine which component is the max to avoid floating point equality comparisons
         if (delta == 0)
+        {
             h = 0;
-        else if (max == rf)
+        }
+        else if (rf >= gf && rf >= bf)
+        {
             h = (60 * ((gf - bf) / delta) + 360) % 360;
-        else if (max == gf)
+        }
+        else if (gf >= bf)
+        {
             h = (60 * ((bf - rf) / delta) + 120) % 360;
+        }
         else
+        {
             h = (60 * ((rf - gf) / delta) + 240) % 360;
+        }
 
         // Saturation
         s = max == 0 ? 0 : delta / max;
@@ -280,7 +288,7 @@ public partial class ColorPickerWindow
     {
         double c = v * s;
         double hp = h / 60.0;
-        double x = c * (1 - Math.Abs((hp % 2) - 1));
+        double x = c * (1 - Math.Abs(hp % 2 - 1));
 
         double r, g, b;
 
