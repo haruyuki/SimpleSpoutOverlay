@@ -299,7 +299,52 @@ namespace SimpleSpoutOverlay.UI.ViewModels
                 _selectedTextAlignment = parsedAlignment.ToString();
                 textLayer.TextAlignment = parsedAlignment;
                 OnPropertyChanged();
+                OnPropertyChanged(nameof(IsTextAlignLeft));
+                OnPropertyChanged(nameof(IsTextAlignCenter));
+                OnPropertyChanged(nameof(IsTextAlignRight));
                 RefreshPreview();
+            }
+        }
+
+        public bool IsTextAlignLeft
+        {
+            get => string.Equals(_selectedTextAlignment, nameof(TextAlignment.Left), StringComparison.OrdinalIgnoreCase);
+            set
+            {
+                if (!value)
+                {
+                    return;
+                }
+
+                SelectedTextAlignment = nameof(TextAlignment.Left);
+            }
+        }
+
+        public bool IsTextAlignCenter
+        {
+            get => string.Equals(_selectedTextAlignment, nameof(TextAlignment.Center), StringComparison.OrdinalIgnoreCase);
+            set
+            {
+                if (!value)
+                {
+                    return;
+                }
+
+                SelectedTextAlignment = nameof(TextAlignment.Center);
+            }
+        }
+
+        public bool IsTextAlignRight
+        {
+            get => string.Equals(_selectedTextAlignment, nameof(TextAlignment.Right), StringComparison.OrdinalIgnoreCase);
+            set
+            {
+                if (!value)
+                {
+                    return;
+                }
+
+                SelectedTextAlignment = nameof(TextAlignment.Right);
             }
         }
 
@@ -465,6 +510,27 @@ namespace SimpleSpoutOverlay.UI.ViewModels
             nameof(TextAlignment.Left),
             nameof(TextAlignment.Center),
             nameof(TextAlignment.Right)
+        ];
+
+        public static IReadOnlyList<double> FontSizePresets { get; } =
+        [
+            16,
+            24,
+            32,
+            48,
+            64,
+            96
+        ];
+
+        public static IReadOnlyList<double> LineHeightPresets { get; } =
+        [
+            0.9,
+            1.0,
+            1.15,
+            1.3,
+            1.5,
+            1.8,
+            2.0
         ];
 
         private void AddTextLayer()
@@ -650,6 +716,9 @@ namespace SimpleSpoutOverlay.UI.ViewModels
             OnPropertyChanged(nameof(SelectedFontSize));
             OnPropertyChanged(nameof(SelectedLineHeight));
             OnPropertyChanged(nameof(SelectedTextAlignment));
+            OnPropertyChanged(nameof(IsTextAlignLeft));
+            OnPropertyChanged(nameof(IsTextAlignCenter));
+            OnPropertyChanged(nameof(IsTextAlignRight));
             OnPropertyChanged(nameof(SelectedFillColor));
             OnPropertyChanged(nameof(SelectedPositionX));
             OnPropertyChanged(nameof(SelectedPositionY));

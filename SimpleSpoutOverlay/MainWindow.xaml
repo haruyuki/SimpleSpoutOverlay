@@ -33,7 +33,7 @@
             <Setter Property="Margin" Value="0,0,0,14" />
         </Style>
 
-        <Style x:Key="TextLayerSectionStyle" TargetType="StackPanel" BasedOn="{StaticResource LayerSectionSpacingStyle}">
+        <Style x:Key="TextLayerSectionStyle" TargetType="StackPanel">
             <Setter Property="Visibility" Value="Collapsed" />
             <Style.Triggers>
                 <DataTrigger Binding="{Binding IsTextLayerSelected}" Value="True">
@@ -42,7 +42,7 @@
             </Style.Triggers>
         </Style>
 
-        <Style x:Key="ImageLayerSectionStyle" TargetType="StackPanel" BasedOn="{StaticResource LayerSectionSpacingStyle}">
+        <Style x:Key="ImageLayerSectionStyle" TargetType="StackPanel">
             <Setter Property="Visibility" Value="Collapsed" />
             <Style.Triggers>
                 <DataTrigger Binding="{Binding IsImageLayerSelected}" Value="True">
@@ -59,6 +59,17 @@
         <Style x:Key="PropertyNumericTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource NumericValueEditorStyle}">
             <Setter Property="ToolTip" Value="Click to type a value" />
             <Setter Property="behaviors:NumericEditorBehavior.IsEnabled" Value="True" />
+        </Style>
+
+        <Style x:Key="PropertySectionExpanderStyle" TargetType="Expander">
+            <Setter Property="Margin" Value="0,0,0,10" />
+            <Setter Property="Foreground" Value="{DynamicResource Brush.TextPrimary}" />
+        </Style>
+
+        <Style x:Key="AlignmentToggleButtonStyle" TargetType="ToggleButton">
+            <Setter Property="Margin" Value="0,0,6,0" />
+            <Setter Property="MinHeight" Value="30" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
         </Style>
     </Window.Resources>
 
@@ -253,207 +264,203 @@
                     <StackPanel Margin="12,12,0,0"
                                 HorizontalAlignment="Stretch">
                         <StackPanel Style="{StaticResource TextLayerSectionStyle}">
-
-                            <StackPanel Margin="0,0,0,14">
-                                <TextBlock Text="Text" Style="{DynamicResource FieldLabelStyle}" />
-                                <TextBox Text="{Binding SelectedText, UpdateSourceTrigger=PropertyChanged}"
-                                         TextWrapping="Wrap"
-                                         AcceptsReturn="True"
-                                         Height="76"
-                                         HorizontalAlignment="Stretch" />
-                            </StackPanel>
-
-                            <StackPanel Margin="0,0,0,14">
-                                <TextBlock Text="Font Family" Style="{DynamicResource FieldLabelStyle}" />
-                                <ComboBox ItemsSource="{Binding AvailableFonts}"
-                                          SelectedItem="{Binding SelectedFontFamily, UpdateSourceTrigger=PropertyChanged}" />
-                            </StackPanel>
-
-                            <StackPanel Style="{StaticResource PropertyRowStyle}">
-                                <TextBlock Text="Font Size" Style="{DynamicResource FieldLabelStyle}" />
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="250" />
-                                        <ColumnDefinition Width="56" />
-                                    </Grid.ColumnDefinitions>
-                                    <Slider Grid.Column="0"
-                                            Style="{StaticResource PropertySliderStyle}"
-                                            Value="{Binding SelectedFontSize, UpdateSourceTrigger=PropertyChanged}"
-                                            Minimum="8"
-                                            Maximum="200" />
-                                    <TextBox Grid.Column="1"
-                                             Style="{StaticResource PropertyNumericTextBoxStyle}"
-                                             Text="{Binding SelectedFontSize, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat=F0}"
-                                             />
-                                </Grid>
-                            </StackPanel>
-
-                            <StackPanel Margin="0,0,0,14">
-                                <TextBlock Text="Text Alignment" Style="{DynamicResource FieldLabelStyle}" />
-                                <ComboBox ItemsSource="{Binding TextAlignmentOptions}"
-                                          SelectedItem="{Binding SelectedTextAlignment, UpdateSourceTrigger=PropertyChanged}" />
-                            </StackPanel>
-
-                            <StackPanel Style="{StaticResource PropertyRowStyle}">
-                                <TextBlock Text="Line Height" Style="{DynamicResource FieldLabelStyle}" />
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="250" />
-                                        <ColumnDefinition Width="56" />
-                                    </Grid.ColumnDefinitions>
-                                    <Slider Grid.Column="0"
-                                            Style="{StaticResource PropertySliderStyle}"
-                                            Value="{Binding SelectedLineHeight, UpdateSourceTrigger=PropertyChanged}"
-                                            Minimum="0.5"
-                                            Maximum="3" />
-                                    <TextBox Grid.Column="1"
-                                             Style="{StaticResource PropertyNumericTextBoxStyle}"
-                                             Text="{Binding SelectedLineHeight, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat=F2}"
-                                             />
-                                </Grid>
-                            </StackPanel>
-
-                            <StackPanel Margin="0,0,0,14">
-                                <TextBlock Text="Fill Color" Style="{DynamicResource FieldLabelStyle}" />
-                                <StackPanel Orientation="Horizontal">
-                                    <Rectangle Width="42"
-                                               Height="42"
-                                               Fill="{Binding SelectedFillColor, Converter={StaticResource ColorToBrushConverter}}"
-                                               Stroke="{DynamicResource Brush.Border}"
-                                               StrokeThickness="1"
-                                               Margin="0,0,10,0" />
-                                    <Button Content="Choose Color"
-                                            Width="130"
-                                            VerticalAlignment="Center"
-                                            Click="OnChooseFillColor" />
+                            <Expander Header="Text Content" Style="{StaticResource PropertySectionExpanderStyle}" IsExpanded="True">
+                                <StackPanel Margin="0,8,0,0">
+                                    <TextBlock Text="Text" Style="{DynamicResource FieldLabelStyle}" />
+                                    <TextBox Text="{Binding SelectedText, UpdateSourceTrigger=PropertyChanged}"
+                                             TextWrapping="Wrap"
+                                             AcceptsReturn="True"
+                                             Height="84"
+                                             HorizontalAlignment="Stretch" />
                                 </StackPanel>
-                            </StackPanel>
+                            </Expander>
+
+                            <Expander Header="Typography" Style="{StaticResource PropertySectionExpanderStyle}" IsExpanded="True">
+                                <StackPanel Margin="0,8,0,0">
+                                    <StackPanel Margin="0,0,0,12">
+                                        <TextBlock Text="Font Family" Style="{DynamicResource FieldLabelStyle}" />
+                                        <ComboBox ItemsSource="{Binding AvailableFonts}"
+                                                  SelectedItem="{Binding SelectedFontFamily, UpdateSourceTrigger=PropertyChanged}" />
+                                    </StackPanel>
+
+                                    <StackPanel Margin="0,0,0,12">
+                                        <TextBlock Text="Font Size (preset or custom)" Style="{DynamicResource FieldLabelStyle}" />
+                                        <ComboBox ItemsSource="{Binding FontSizePresets}"
+                                                  IsEditable="False"
+                                                  SelectedItem="{Binding SelectedFontSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                    </StackPanel>
+
+                                    <StackPanel Margin="0,0,0,12">
+                                        <TextBlock Text="Text Alignment" Style="{DynamicResource FieldLabelStyle}" />
+                                        <UniformGrid Columns="3">
+                                            <ToggleButton Content="Left"
+                                                          Style="{StaticResource AlignmentToggleButtonStyle}"
+                                                          IsChecked="{Binding IsTextAlignLeft, Mode=TwoWay}" />
+                                            <ToggleButton Content="Center"
+                                                          Style="{StaticResource AlignmentToggleButtonStyle}"
+                                                          IsChecked="{Binding IsTextAlignCenter, Mode=TwoWay}" />
+                                            <ToggleButton Content="Right"
+                                                          Margin="0"
+                                                          Style="{StaticResource AlignmentToggleButtonStyle}"
+                                                          IsChecked="{Binding IsTextAlignRight, Mode=TwoWay}" />
+                                        </UniformGrid>
+                                    </StackPanel>
+
+                                    <StackPanel>
+                                        <TextBlock Text="Line Height (preset or custom)" Style="{DynamicResource FieldLabelStyle}" />
+                                        <ComboBox ItemsSource="{Binding LineHeightPresets}"
+                                                  IsEditable="False"
+                                                  SelectedItem="{Binding SelectedLineHeight, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Expander>
+
+                            <Expander Header="Appearance" Style="{StaticResource PropertySectionExpanderStyle}">
+                                <StackPanel Margin="0,8,0,0">
+                                    <TextBlock Text="Fill Color" Style="{DynamicResource FieldLabelStyle}" />
+                                    <StackPanel Orientation="Horizontal">
+                                        <Rectangle Width="42"
+                                                   Height="42"
+                                                   Fill="{Binding SelectedFillColor, Converter={StaticResource ColorToBrushConverter}}"
+                                                   Stroke="{DynamicResource Brush.Border}"
+                                                   StrokeThickness="1"
+                                                   Margin="0,0,10,0" />
+                                        <Button Content="Choose Color"
+                                                Width="130"
+                                                VerticalAlignment="Center"
+                                                Click="OnChooseFillColor" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Expander>
+
+                            <Expander Header="Outline" Style="{StaticResource PropertySectionExpanderStyle}">
+                                <StackPanel Margin="0,8,0,0">
+                                    <CheckBox IsChecked="{Binding SelectedOutlineEnabled, UpdateSourceTrigger=PropertyChanged}"
+                                              Content="Enable Outline"
+                                              Margin="0,0,0,10" />
+
+                                    <StackPanel Margin="0,0,0,12" Opacity="{Binding SelectedOutlineEnabled}">
+                                        <TextBlock Text="Outline Color" Style="{DynamicResource FieldLabelStyle}" />
+                                        <StackPanel Orientation="Horizontal">
+                                            <Rectangle Width="42"
+                                                       Height="42"
+                                                       Fill="{Binding SelectedOutlineColor, Converter={StaticResource ColorToBrushConverter}}"
+                                                       Stroke="{DynamicResource Brush.Border}"
+                                                       StrokeThickness="1"
+                                                       Margin="0,0,10,0" />
+                                            <Button Content="Choose Color"
+                                                    Width="130"
+                                                    VerticalAlignment="Center"
+                                                    Click="OnChooseOutlineColor" />
+                                        </StackPanel>
+                                    </StackPanel>
+
+                                    <StackPanel Style="{StaticResource PropertyRowCompactStyle}">
+                                        <TextBlock Text="Outline Thickness" Style="{DynamicResource FieldLabelStyle}" />
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="250" />
+                                                <ColumnDefinition Width="56" />
+                                            </Grid.ColumnDefinitions>
+                                            <Slider Grid.Column="0"
+                                                    Style="{StaticResource PropertySliderStyle}"
+                                                    Value="{Binding SelectedOutlineThickness, UpdateSourceTrigger=PropertyChanged}"
+                                                    Minimum="0.5"
+                                                    Maximum="20" />
+                                            <TextBox Grid.Column="1"
+                                                     Style="{StaticResource PropertyNumericTextBoxStyle}"
+                                                     Text="{Binding SelectedOutlineThickness, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat=F1}" />
+                                        </Grid>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Expander>
                         </StackPanel>
 
                         <StackPanel Style="{StaticResource ImageLayerSectionStyle}">
-
-                            <TextBlock Text="Image File" Style="{DynamicResource FieldLabelStyle}" />
-                            <TextBox Text="{Binding SelectedImagePath}" IsReadOnly="True" TextWrapping="Wrap" Margin="0,0,0,8" />
-                            <Button Command="{Binding ReplaceImageCommand}" Content="Choose Image" Width="130" />
+                            <Expander Header="Image" Style="{StaticResource PropertySectionExpanderStyle}" IsExpanded="True">
+                                <StackPanel Margin="0,8,0,0">
+                                    <TextBlock Text="Image File" Style="{DynamicResource FieldLabelStyle}" />
+                                    <TextBox Text="{Binding SelectedImagePath}" IsReadOnly="True" TextWrapping="Wrap" Margin="0,0,0,8" />
+                                    <Button Command="{Binding ReplaceImageCommand}" Content="Choose Image" Width="130" />
+                                </StackPanel>
+                            </Expander>
                         </StackPanel>
 
-                        <StackPanel Style="{StaticResource PropertyRowStyle}">
-                            <TextBlock Text="Position X" Style="{DynamicResource FieldLabelStyle}" />
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="250" />
-                                    <ColumnDefinition Width="56" />
-                                </Grid.ColumnDefinitions>
-                                <Slider Grid.Column="0"
-                                        Style="{StaticResource PropertySliderStyle}"
-                                        Value="{Binding SelectedPositionX, UpdateSourceTrigger=PropertyChanged}"
-                                        Minimum="0"
-                                        Maximum="1920" />
-                                <TextBox Grid.Column="1"
-                                         Style="{StaticResource PropertyNumericTextBoxStyle}"
-                                         Text="{Binding SelectedPositionX, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat=F0}"
-                                         />
-                            </Grid>
-                        </StackPanel>
+                        <Expander Header="Transform" Style="{StaticResource PropertySectionExpanderStyle}">
+                            <StackPanel Margin="0,8,0,0">
+                                <StackPanel Style="{StaticResource PropertyRowStyle}">
+                                    <TextBlock Text="Position X" Style="{DynamicResource FieldLabelStyle}" />
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="250" />
+                                            <ColumnDefinition Width="56" />
+                                        </Grid.ColumnDefinitions>
+                                        <Slider Grid.Column="0"
+                                                Style="{StaticResource PropertySliderStyle}"
+                                                Value="{Binding SelectedPositionX, UpdateSourceTrigger=PropertyChanged}"
+                                                Minimum="0"
+                                                Maximum="1920" />
+                                        <TextBox Grid.Column="1"
+                                                 Style="{StaticResource PropertyNumericTextBoxStyle}"
+                                                 Text="{Binding SelectedPositionX, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat=F0}" />
+                                    </Grid>
+                                </StackPanel>
 
-                        <StackPanel Style="{StaticResource PropertyRowStyle}">
-                            <TextBlock Text="Position Y" Style="{DynamicResource FieldLabelStyle}" />
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="250" />
-                                    <ColumnDefinition Width="56" />
-                                </Grid.ColumnDefinitions>
-                                <Slider Grid.Column="0"
-                                        Style="{StaticResource PropertySliderStyle}"
-                                        Value="{Binding SelectedPositionY, UpdateSourceTrigger=PropertyChanged}"
-                                        Minimum="0"
-                                        Maximum="1080" />
-                                <TextBox Grid.Column="1"
-                                         Style="{StaticResource PropertyNumericTextBoxStyle}"
-                                         Text="{Binding SelectedPositionY, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat=F0}"
-                                         />
-                            </Grid>
-                        </StackPanel>
+                                <StackPanel Style="{StaticResource PropertyRowStyle}">
+                                    <TextBlock Text="Position Y" Style="{DynamicResource FieldLabelStyle}" />
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="250" />
+                                            <ColumnDefinition Width="56" />
+                                        </Grid.ColumnDefinitions>
+                                        <Slider Grid.Column="0"
+                                                Style="{StaticResource PropertySliderStyle}"
+                                                Value="{Binding SelectedPositionY, UpdateSourceTrigger=PropertyChanged}"
+                                                Minimum="0"
+                                                Maximum="1080" />
+                                        <TextBox Grid.Column="1"
+                                                 Style="{StaticResource PropertyNumericTextBoxStyle}"
+                                                 Text="{Binding SelectedPositionY, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat=F0}" />
+                                    </Grid>
+                                </StackPanel>
 
-                        <StackPanel Style="{StaticResource PropertyRowStyle}">
-                            <TextBlock Text="Scale X" Style="{DynamicResource FieldLabelStyle}" />
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="250" />
-                                    <ColumnDefinition Width="56" />
-                                </Grid.ColumnDefinitions>
-                                <Slider Grid.Column="0"
-                                        Style="{StaticResource PropertySliderStyle}"
-                                        Value="{Binding SelectedScaleX, UpdateSourceTrigger=PropertyChanged}"
-                                        Minimum="0.1"
-                                        Maximum="3" />
-                                <TextBox Grid.Column="1"
-                                         Style="{StaticResource PropertyNumericTextBoxStyle}"
-                                         Text="{Binding SelectedScaleX, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat=F2}"
-                                         />
-                            </Grid>
-                        </StackPanel>
+                                <StackPanel Style="{StaticResource PropertyRowStyle}">
+                                    <TextBlock Text="Scale X" Style="{DynamicResource FieldLabelStyle}" />
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="250" />
+                                            <ColumnDefinition Width="56" />
+                                        </Grid.ColumnDefinitions>
+                                        <Slider Grid.Column="0"
+                                                Style="{StaticResource PropertySliderStyle}"
+                                                Value="{Binding SelectedScaleX, UpdateSourceTrigger=PropertyChanged}"
+                                                Minimum="0.1"
+                                                Maximum="3" />
+                                        <TextBox Grid.Column="1"
+                                                 Style="{StaticResource PropertyNumericTextBoxStyle}"
+                                                 Text="{Binding SelectedScaleX, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat=F2}" />
+                                    </Grid>
+                                </StackPanel>
 
-                        <StackPanel Style="{StaticResource PropertyRowStyle}">
-                            <TextBlock Text="Scale Y" Style="{DynamicResource FieldLabelStyle}" />
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="250" />
-                                    <ColumnDefinition Width="56" />
-                                </Grid.ColumnDefinitions>
-                                <Slider Grid.Column="0"
-                                        Style="{StaticResource PropertySliderStyle}"
-                                        Value="{Binding SelectedScaleY, UpdateSourceTrigger=PropertyChanged}"
-                                        Minimum="0.1"
-                                        Maximum="3" />
-                                <TextBox Grid.Column="1"
-                                         Style="{StaticResource PropertyNumericTextBoxStyle}"
-                                         Text="{Binding SelectedScaleY, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat=F2}"
-                                         />
-                            </Grid>
-                        </StackPanel>
-
-                        <StackPanel Style="{StaticResource TextLayerSectionStyle}" Margin="0">
-
-                            <CheckBox IsChecked="{Binding SelectedOutlineEnabled, UpdateSourceTrigger=PropertyChanged}"
-                                      Content="Enable Outline"
-                                      Margin="0,0,0,14" />
-
-                            <StackPanel Margin="0,0,0,14" Opacity="{Binding SelectedOutlineEnabled}">
-                                <TextBlock Text="Outline Color" Style="{DynamicResource FieldLabelStyle}" />
-                                <StackPanel Orientation="Horizontal">
-                                    <Rectangle Width="42"
-                                               Height="42"
-                                               Fill="{Binding SelectedOutlineColor, Converter={StaticResource ColorToBrushConverter}}"
-                                               Stroke="{DynamicResource Brush.Border}"
-                                               StrokeThickness="1"
-                                               Margin="0,0,10,0" />
-                                    <Button Content="Choose Color"
-                                            Width="130"
-                                            VerticalAlignment="Center"
-                                            Click="OnChooseOutlineColor" />
+                                <StackPanel Style="{StaticResource PropertyRowCompactStyle}">
+                                    <TextBlock Text="Scale Y" Style="{DynamicResource FieldLabelStyle}" />
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="250" />
+                                            <ColumnDefinition Width="56" />
+                                        </Grid.ColumnDefinitions>
+                                        <Slider Grid.Column="0"
+                                                Style="{StaticResource PropertySliderStyle}"
+                                                Value="{Binding SelectedScaleY, UpdateSourceTrigger=PropertyChanged}"
+                                                Minimum="0.1"
+                                                Maximum="3" />
+                                        <TextBox Grid.Column="1"
+                                                 Style="{StaticResource PropertyNumericTextBoxStyle}"
+                                                 Text="{Binding SelectedScaleY, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat=F2}" />
+                                    </Grid>
                                 </StackPanel>
                             </StackPanel>
-
-                            <StackPanel Style="{StaticResource PropertyRowCompactStyle}">
-                                <TextBlock Text="Outline Thickness" Style="{DynamicResource FieldLabelStyle}" />
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="250" />
-                                        <ColumnDefinition Width="56" />
-                                    </Grid.ColumnDefinitions>
-                                    <Slider Grid.Column="0"
-                                            Style="{StaticResource PropertySliderStyle}"
-                                            Value="{Binding SelectedOutlineThickness, UpdateSourceTrigger=PropertyChanged}"
-                                            Minimum="0.5"
-                                            Maximum="20" />
-                                    <TextBox Grid.Column="1"
-                                             Style="{StaticResource PropertyNumericTextBoxStyle}"
-                                             Text="{Binding SelectedOutlineThickness, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat=F1}"
-                                             />
-                                </Grid>
-                            </StackPanel>
-                        </StackPanel>
+                        </Expander>
                     </StackPanel>
                     </Border>
                 </ScrollViewer>
