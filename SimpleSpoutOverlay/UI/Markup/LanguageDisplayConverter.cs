@@ -26,7 +26,14 @@ namespace SimpleSpoutOverlay.UI.Markup
 
         public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
-            throw new NotImplementedException();
+            if (value is not string displayName)
+            {
+                return string.Empty;
+            }
+
+            // Reverse lookup: find language code by display name
+            var pair = LocalizationService.LanguageNames.FirstOrDefault(x => x.Value == displayName);
+            return pair.Key ?? displayName;
         }
     }
 }
