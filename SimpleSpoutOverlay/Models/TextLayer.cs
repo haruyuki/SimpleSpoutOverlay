@@ -1,4 +1,5 @@
 ﻿using System.Windows.Media;
+using System.Windows;
 
 namespace SimpleSpoutOverlay.Models
 {
@@ -30,6 +31,11 @@ namespace SimpleSpoutOverlay.Models
         public string FontFamily { get; set; } = fontFamily;
 
         public double FontSize { get; set; } = fontSize;
+
+        /// Multiplier applied to the base font size to control spacing between lines.
+        public double LineHeightMultiplier { get; set; } = 1.0;
+
+        public TextAlignment TextAlignment { get; set; } = TextAlignment.Left;
 
         public Color FillColor { get; set; } = Colors.White;
 

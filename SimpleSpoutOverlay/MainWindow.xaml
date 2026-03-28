@@ -289,6 +289,31 @@
                             </StackPanel>
 
                             <StackPanel Margin="0,0,0,14">
+                                <TextBlock Text="Text Alignment" Style="{DynamicResource FieldLabelStyle}" />
+                                <ComboBox ItemsSource="{Binding TextAlignmentOptions}"
+                                          SelectedItem="{Binding SelectedTextAlignment, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+
+                            <StackPanel Style="{StaticResource PropertyRowStyle}">
+                                <TextBlock Text="Line Height" Style="{DynamicResource FieldLabelStyle}" />
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="250" />
+                                        <ColumnDefinition Width="56" />
+                                    </Grid.ColumnDefinitions>
+                                    <Slider Grid.Column="0"
+                                            Style="{StaticResource PropertySliderStyle}"
+                                            Value="{Binding SelectedLineHeight, UpdateSourceTrigger=PropertyChanged}"
+                                            Minimum="0.5"
+                                            Maximum="3" />
+                                    <TextBox Grid.Column="1"
+                                             Style="{StaticResource PropertyNumericTextBoxStyle}"
+                                             Text="{Binding SelectedLineHeight, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat=F2}"
+                                             />
+                                </Grid>
+                            </StackPanel>
+
+                            <StackPanel Margin="0,0,0,14">
                                 <TextBlock Text="Fill Color" Style="{DynamicResource FieldLabelStyle}" />
                                 <StackPanel Orientation="Horizontal">
                                     <Rectangle Width="42"
@@ -452,7 +477,7 @@
         </Border>
 
         <Border Grid.Row="0" Grid.RowSpan="2"
-                Grid.ColumnSpan="3"
+                Grid.ColumnSpan="3" Grid.Column="0"
                 HorizontalAlignment="Right"
                 VerticalAlignment="Top"
                 Margin="0,10,10,0"

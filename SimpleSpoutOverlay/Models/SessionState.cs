@@ -3,7 +3,7 @@
 /// Serializable application state for restoring the previous editing session.
 public sealed class SessionState
 {
-    public const int CurrentVersion = 1;
+    public const int CurrentVersion = 2;
 
     public int Version { get; init; } = CurrentVersion;
 
@@ -24,6 +24,10 @@ public sealed class LayerState
     public string FontFamily { get; init; } = "Arial";
 
     public double FontSize { get; init; } = 48;
+
+    public double LineHeightMultiplier { get; init; } = 1.0;
+
+    public string TextAlignment { get; init; } = "Left";
 
     public string FillColor { get; init; } = "#FFFFFFFF";
 

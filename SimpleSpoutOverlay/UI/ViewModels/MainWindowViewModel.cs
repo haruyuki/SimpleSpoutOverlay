@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
+using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -41,6 +42,8 @@ namespace SimpleSpoutOverlay.UI.ViewModels
 
         private const double MinFontSize = 8;
         private const double MaxFontSize = 200;
+        private const double MinLineHeightMultiplier = 0.5;
+        private const double MaxLineHeightMultiplier = 3;
         private const double MinPositionX = 0;
         private const double MaxPositionX = 1920;
         private const double MinPositionY = 0;
@@ -53,6 +56,8 @@ namespace SimpleSpoutOverlay.UI.ViewModels
         private string _selectedText = string.Empty;
         private string _selectedFontFamily = "Arial";
         private double _selectedFontSize = 48;
+        private double _selectedLineHeight = 1.0;
+        private string _selectedTextAlignment = nameof(TextAlignment.Left);
         private Color _selectedFillColor = Colors.White;
         private double _selectedPositionX = 10;
         private double _selectedPositionY = 10;
@@ -260,6 +265,44 @@ namespace SimpleSpoutOverlay.UI.ViewModels
             }
         }
 
+        public double SelectedLineHeight
+        {
+            get => _selectedLineHeight;
+            set
+            {
+                value = Math.Clamp(value, MinLineHeightMultiplier, MaxLineHeightMultiplier);
+                if (!(Math.Abs(_selectedLineHeight - value) > 0.001) || _selectedLayer is not TextLayer textLayer) return;
+                RecordPropertyUndo();
+                _selectedLineHeight = value;
+                textLayer.LineHeightMultiplier = value;
+                OnPropertyChanged();
+                RefreshPreview();
+            }
+        }
+
+        public string SelectedTextAlignment
+        {
+            get => _selectedTextAlignment;
+            set
+            {
+                if (_selectedTextAlignment == value || _selectedLayer is not TextLayer textLayer) return;
+
+                TextAlignment parsedAlignment = ParseTextAlignment(value);
+                if (textLayer.TextAlignment == parsedAlignment)
+                {
+                    _selectedTextAlignment = parsedAlignment.ToString();
+                    OnPropertyChanged();
+                    return;
+                }
+
+                PushUndoSnapshot();
+                _selectedTextAlignment = parsedAlignment.ToString();
+                textLayer.TextAlignment = parsedAlignment;
+                OnPropertyChanged();
+                RefreshPreview();
+            }
+        }
+
         public Color SelectedFillColor
         {
             get => _selectedFillColor;
@@ -417,6 +460,13 @@ namespace SimpleSpoutOverlay.UI.ViewModels
             }
         }
 
+        public static IReadOnlyList<string> TextAlignmentOptions { get; } =
+        [
+            nameof(TextAlignment.Left),
+            nameof(TextAlignment.Center),
+            nameof(TextAlignment.Right)
+        ];
+
         private void AddTextLayer()
         {
             PushUndoSnapshot();
@@ -548,6 +598,8 @@ namespace SimpleSpoutOverlay.UI.ViewModels
                 _selectedText = string.Empty;
                 _selectedFontFamily = "Arial";
                 _selectedFontSize = 48;
+                _selectedLineHeight = 1.0;
+                _selectedTextAlignment = nameof(TextAlignment.Left);
                 _selectedFillColor = Colors.White;
                 _selectedPositionX = 10;
                 _selectedPositionY = 10;
@@ -570,6 +622,8 @@ namespace SimpleSpoutOverlay.UI.ViewModels
                     _selectedText = textLayer.Text;
                     _selectedFontFamily = textLayer.FontFamily;
                     _selectedFontSize = textLayer.FontSize;
+                    _selectedLineHeight = textLayer.LineHeightMultiplier;
+                    _selectedTextAlignment = textLayer.TextAlignment.ToString();
                     _selectedFillColor = textLayer.FillColor;
                     _selectedOutlineEnabled = textLayer.OutlineEnabled;
                     _selectedOutlineColor = textLayer.OutlineColor;
@@ -581,6 +635,8 @@ namespace SimpleSpoutOverlay.UI.ViewModels
                     _selectedText = string.Empty;
                     _selectedFontFamily = "Arial";
                     _selectedFontSize = 48;
+                    _selectedLineHeight = 1.0;
+                    _selectedTextAlignment = nameof(TextAlignment.Left);
                     _selectedFillColor = Colors.White;
                     _selectedOutlineEnabled = false;
                     _selectedOutlineColor = Colors.Black;
@@ -592,6 +648,8 @@ namespace SimpleSpoutOverlay.UI.ViewModels
             OnPropertyChanged(nameof(SelectedText));
             OnPropertyChanged(nameof(SelectedFontFamily));
             OnPropertyChanged(nameof(SelectedFontSize));
+            OnPropertyChanged(nameof(SelectedLineHeight));
+            OnPropertyChanged(nameof(SelectedTextAlignment));
             OnPropertyChanged(nameof(SelectedFillColor));
             OnPropertyChanged(nameof(SelectedPositionX));
             OnPropertyChanged(nameof(SelectedPositionY));
@@ -783,6 +841,8 @@ namespace SimpleSpoutOverlay.UI.ViewModels
                         Text = layer.Text,
                         FontFamily = layer.FontFamily,
                         FontSize = layer.FontSize,
+                        LineHeightMultiplier = layer.LineHeightMultiplier,
+                        TextAlignment = layer.TextAlignment,
                         FillColor = layer.FillColor,
                         PositionX = layer.PositionX,
                         PositionY = layer.PositionY,
@@ -818,6 +878,8 @@ namespace SimpleSpoutOverlay.UI.ViewModels
                     a.Text != b.Text ||
                     a.FontFamily != b.FontFamily ||
                     Math.Abs(a.FontSize - b.FontSize) > 0.001 ||
+                    Math.Abs(a.LineHeightMultiplier - b.LineHeightMultiplier) > 0.001 ||
+                    a.TextAlignment != b.TextAlignment ||
                     a.FillColor != b.FillColor ||
                     Math.Abs(a.PositionX - b.PositionX) > 0.001 ||
                     Math.Abs(a.PositionY - b.PositionY) > 0.001 ||
@@ -1082,6 +1144,8 @@ namespace SimpleSpoutOverlay.UI.ViewModels
                     Text = textLayer.Text,
                     FontFamily = textLayer.FontFamily,
                     FontSize = textLayer.FontSize,
+                    LineHeightMultiplier = textLayer.LineHeightMultiplier,
+                    TextAlignment = textLayer.TextAlignment.ToString(),
                     FillColor = ToArgbHex(textLayer.FillColor),
                     PositionX = textLayer.PositionX,
                     PositionY = textLayer.PositionY,
@@ -1119,6 +1183,8 @@ namespace SimpleSpoutOverlay.UI.ViewModels
 
             return new TextLayer(state.Text, state.FontFamily, state.FontSize)
             {
+                LineHeightMultiplier = Math.Clamp(state.LineHeightMultiplier, MinLineHeightMultiplier, MaxLineHeightMultiplier),
+                TextAlignment = ParseTextAlignment(state.TextAlignment),
                 FillColor = ParseColor(state.FillColor, Colors.White),
                 PositionX = state.PositionX,
                 PositionY = state.PositionY,
@@ -1128,6 +1194,17 @@ namespace SimpleSpoutOverlay.UI.ViewModels
                 OutlineColor = ParseColor(state.OutlineColor, Colors.Black),
                 OutlineThickness = state.OutlineThickness
             };
+        }
+
+        private static TextAlignment ParseTextAlignment(string? value)
+        {
+            if (Enum.TryParse(value, ignoreCase: true, out TextAlignment alignment)
+                && alignment is TextAlignment.Left or TextAlignment.Center or TextAlignment.Right)
+            {
+                return alignment;
+            }
+
+            return TextAlignment.Left;
         }
 
         private static Color ParseColor(string value, Color fallback)

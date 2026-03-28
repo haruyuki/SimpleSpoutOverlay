@@ -406,6 +406,13 @@ public partial class MainWindow
             Brushes.Black,
             1.0);
 
+        double clampedLineHeightMultiplier = Math.Max(layer.LineHeightMultiplier, 0.1);
+        formattedText.LineHeight = layer.FontSize * clampedLineHeightMultiplier;
+
+        double alignmentWidth = Math.Max(formattedText.WidthIncludingTrailingWhitespace, 1.0);
+        formattedText.MaxTextWidth = alignmentWidth;
+        formattedText.TextAlignment = layer.TextAlignment;
+
         Geometry geometry = formattedText.BuildGeometry(new Point(0, 0));
         TransformGroup transformGroup = new();
         transformGroup.Children.Add(new ScaleTransform(layer.ScaleX, layer.ScaleY));
