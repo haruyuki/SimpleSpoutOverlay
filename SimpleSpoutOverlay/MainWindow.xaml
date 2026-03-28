@@ -159,6 +159,8 @@
                          DragOver="OnLayerListDragOver"
                          DragLeave="OnLayerListDragLeave"
                          Drop="OnLayerListDrop"
+                         HorizontalContentAlignment="Stretch"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                          Margin="12"
                          MinHeight="260">
                     <ListBox.ItemTemplate>
