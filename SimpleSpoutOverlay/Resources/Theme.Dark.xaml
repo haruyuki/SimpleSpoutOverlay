@@ -137,16 +137,17 @@
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
                                 CornerRadius="4">
-                            <Grid>
+                            <Grid ClipToBounds="True">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="20" />
                                 </Grid.ColumnDefinitions>
 
-                                <ContentPresenter Grid.Column="0"
+                                <ContentPresenter x:Name="SelectionContentPresenter"
+                                                  Grid.Column="0"
                                                   Margin="10,0,6,0"
                                                   VerticalAlignment="Center"
-                                                  HorizontalAlignment="Left"
+                                                  HorizontalAlignment="Stretch"
                                                   Content="{TemplateBinding SelectionBoxItem}"
                                                   ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
                                                   ContentStringFormat="{TemplateBinding SelectionBoxItemStringFormat}" />

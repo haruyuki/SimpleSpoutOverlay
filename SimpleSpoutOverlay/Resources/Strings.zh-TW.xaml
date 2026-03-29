@@ -24,8 +24,6 @@
     <system:String x:Key="Expander.TextContent">文本內容</system:String>
     <system:String x:Key="Label.Text">文本</system:String>
     <system:String x:Key="Expander.Typography">排版</system:String>
-    <system:String x:Key="Label.FontFamily">字體</system:String>
-    <system:String x:Key="Label.FontSize">字體大小</system:String>
     <system:String x:Key="Label.TextAlignment">文本對齊</system:String>
     <system:String x:Key="Label.LineHeight">行高</system:String>
     <system:String x:Key="Expander.Appearance">外觀</system:String>

@@ -24,8 +24,6 @@
     <system:String x:Key="Expander.TextContent">Text Content</system:String>
     <system:String x:Key="Label.Text">Text</system:String>
     <system:String x:Key="Expander.Typography">Typography</system:String>
-    <system:String x:Key="Label.FontFamily">Font Family</system:String>
-    <system:String x:Key="Label.FontSize">Font Size</system:String>
     <system:String x:Key="Label.TextAlignment">Text Alignment</system:String>
     <system:String x:Key="Label.LineHeight">Line Height</system:String>
     <system:String x:Key="Expander.Appearance">Appearance</system:String>
