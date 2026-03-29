@@ -453,41 +453,31 @@
 
                         <Expander Header="{markup:LanguageKey Expander.Transform}" Style="{StaticResource PropertySectionExpanderStyle}">
                             <StackPanel Margin="0,8,0,0">
-                                <StackPanel Style="{StaticResource PropertyRowStyle}">
-                                    <TextBlock Text="{markup:LanguageKey Label.PositionX}" Style="{DynamicResource FieldLabelStyle}" />
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="56" />
-                                        </Grid.ColumnDefinitions>
-                                        <Slider Grid.Column="0"
-                                                Style="{StaticResource PropertySliderStyle}"
-                                                Value="{Binding SelectedPositionX, UpdateSourceTrigger=PropertyChanged}"
-                                                Minimum="0"
-                                                Maximum="1920" />
-                                        <TextBox Grid.Column="1"
-                                                 Style="{StaticResource PropertyNumericTextBoxStyle}"
-                                                 Text="{Binding SelectedPositionX, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat=F0}" />
-                                    </Grid>
-                                </StackPanel>
-
-                                <StackPanel Style="{StaticResource PropertyRowStyle}">
-                                    <TextBlock Text="{markup:LanguageKey Label.PositionY}" Style="{DynamicResource FieldLabelStyle}" />
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="56" />
-                                        </Grid.ColumnDefinitions>
-                                        <Slider Grid.Column="0"
-                                                Style="{StaticResource PropertySliderStyle}"
-                                                Value="{Binding SelectedPositionY, UpdateSourceTrigger=PropertyChanged}"
-                                                Minimum="0"
-                                                Maximum="1080" />
-                                        <TextBox Grid.Column="1"
-                                                 Style="{StaticResource PropertyNumericTextBoxStyle}"
-                                                 Text="{Binding SelectedPositionY, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat=F0}" />
-                                    </Grid>
-                                </StackPanel>
+                                <Grid Margin="0,0,0,14">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="50" />
+                                        <ColumnDefinition Width="20" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="50" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0"
+                                               Text="{markup:LanguageKey Label.PositionX}"
+                                               Style="{DynamicResource FieldLabelStyle}"
+                                               VerticalAlignment="Center"
+                                               Margin="0,0,6,0" />
+                                    <TextBox Grid.Column="1"
+                                             Style="{StaticResource PropertyNumericTextBoxStyle}"
+                                             Text="{Binding SelectedPositionX, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat=F0}" />
+                                    <TextBlock Grid.Column="3"
+                                               Text="{markup:LanguageKey Label.PositionY}"
+                                               Style="{DynamicResource FieldLabelStyle}"
+                                               VerticalAlignment="Center"
+                                               Margin="0,0,6,0" />
+                                    <TextBox Grid.Column="4"
+                                             Style="{StaticResource PropertyNumericTextBoxStyle}"
+                                             Text="{Binding SelectedPositionY, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat=F0}" />
+                                </Grid>
 
                                 <StackPanel Style="{StaticResource PropertyRowStyle}">
                                     <TextBlock Text="{markup:LanguageKey Label.ScaleX}" Style="{DynamicResource FieldLabelStyle}" />
