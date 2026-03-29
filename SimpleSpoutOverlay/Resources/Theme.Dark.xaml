@@ -140,7 +140,7 @@
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="34" />
+                                    <ColumnDefinition Width="20" />
                                 </Grid.ColumnDefinitions>
 
                                 <ContentPresenter Grid.Column="0"
