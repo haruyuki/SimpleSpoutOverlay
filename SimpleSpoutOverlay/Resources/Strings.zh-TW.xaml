@@ -9,19 +9,10 @@
 
     <!-- Session Controls -->
     <system:String x:Key="Label.Session">工作階段</system:String>
-    <system:String x:Key="Button.SaveSetup">保存設置</system:String>
-    <system:String x:Key="Button.LoadSetup">載入設置</system:String>
     <system:String x:Key="Button.Snapping">對齊吸附</system:String>
     <system:String x:Key="Button.StartSpout">啟動 Spout</system:String>
     <system:String x:Key="Button.SpoutActive">Spout 已激活</system:String>
     <system:String x:Key="Button.Language">語言</system:String>
-
-    <!-- Layer Controls -->
-    <system:String x:Key="Button.AddText">新增文本</system:String>
-    <system:String x:Key="Button.AddImage">新增圖像</system:String>
-    <system:String x:Key="Button.Delete">刪除</system:String>
-    <system:String x:Key="Button.MoveUp">上移</system:String>
-    <system:String x:Key="Button.MoveDown">下移</system:String>
 
     <!-- Text Layer Properties -->
     <system:String x:Key="Expander.TextContent">文本內容</system:String>

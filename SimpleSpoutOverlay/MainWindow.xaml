@@ -102,13 +102,21 @@
                            Margin="0,0,10,0" />
 
                 <Button Command="{Binding SaveSetupCommand}"
-                        Content="{markup:LanguageKey Button.SaveSetup}"
                         Style="{DynamicResource SecondaryButtonStyle}"
-                        Margin="0,0,8,0" />
+                        Margin="0,0,8,0">
+                    <TextBlock Text="&#xE74E;"
+                               FontFamily="Segoe MDL2 Assets"
+                               FontSize="16"
+                               HorizontalAlignment="Center" />
+                </Button>
                 <Button Command="{Binding LoadSetupCommand}"
-                        Content="{markup:LanguageKey Button.LoadSetup}"
                         Style="{DynamicResource SecondaryButtonStyle}"
-                        Margin="0,0,8,0" />
+                        Margin="0,0,8,0">
+                    <TextBlock Text="&#xE8E5;"
+                               FontFamily="Segoe MDL2 Assets"
+                               FontSize="16"
+                               HorizontalAlignment="Center" />
+                </Button>
 
                 <CheckBox Content="{markup:LanguageKey Button.Snapping}"
                           VerticalAlignment="Center"
@@ -189,16 +197,28 @@
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
                         <Button Grid.Column="0"
-                                Command="{Binding AddLayerCommand}"
-                                Content="{markup:LanguageKey Button.AddText}" />
+                                Command="{Binding AddLayerCommand}">
+                            <TextBlock Text="&#xE8D2;"
+                                       FontFamily="Segoe MDL2 Assets"
+                                       FontSize="16"
+                                       HorizontalAlignment="Center" />
+                        </Button>
                         <Button Grid.Column="2"
-                                Command="{Binding AddImageLayerCommand}"
-                                Content="{markup:LanguageKey Button.AddImage}" />
+                                Command="{Binding AddImageLayerCommand}">
+                            <TextBlock Text="&#xEB9F;"
+                                       FontFamily="Segoe MDL2 Assets"
+                                       FontSize="16"
+                                       HorizontalAlignment="Center" />
+                        </Button>
                         <Button Grid.Column="4"
                                 Command="{Binding DeleteLayerCommand}"
-                                Content="{markup:LanguageKey Button.Delete}"
                                 Style="{DynamicResource DangerButtonStyle}"
-                                IsEnabled="{Binding SelectedLayer, Converter={StaticResource HasValueToBoolConverter}}" />
+                                IsEnabled="{Binding SelectedLayer, Converter={StaticResource HasValueToBoolConverter}}">
+                            <TextBlock Text="&#xE74D;"
+                                       FontFamily="Segoe MDL2 Assets"
+                                       FontSize="16"
+                                       HorizontalAlignment="Center" />
+                        </Button>
                     </Grid>
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -208,14 +228,22 @@
                         </Grid.ColumnDefinitions>
                         <Button Grid.Column="0"
                                 Command="{Binding MoveLayerUpCommand}"
-                                Content="{markup:LanguageKey Button.MoveUp}"
                                 Style="{DynamicResource SuccessButtonStyle}"
-                                IsEnabled="{Binding SelectedLayer, Converter={StaticResource HasValueToBoolConverter}}" />
+                                IsEnabled="{Binding SelectedLayer, Converter={StaticResource HasValueToBoolConverter}}">
+                            <TextBlock Text="&#xE70E;"
+                                       FontFamily="Segoe MDL2 Assets"
+                                       FontSize="16"
+                                       HorizontalAlignment="Center" />
+                        </Button>
                         <Button Grid.Column="2"
                                 Command="{Binding MoveLayerDownCommand}"
-                                Content="{markup:LanguageKey Button.MoveDown}"
                                 Style="{DynamicResource SuccessButtonStyle}"
-                                IsEnabled="{Binding SelectedLayer, Converter={StaticResource HasValueToBoolConverter}}" />
+                                IsEnabled="{Binding SelectedLayer, Converter={StaticResource HasValueToBoolConverter}}">
+                            <TextBlock Text="&#xE70D;"
+                                       FontFamily="Segoe MDL2 Assets"
+                                       FontSize="16"
+                                       HorizontalAlignment="Center" />
+                        </Button>
                     </Grid>
                 </StackPanel>
             </Grid>

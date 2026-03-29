@@ -9,19 +9,10 @@
 
     <!-- Session Controls -->
     <system:String x:Key="Label.Session">Session</system:String>
-    <system:String x:Key="Button.SaveSetup">Save Setup</system:String>
-    <system:String x:Key="Button.LoadSetup">Load Setup</system:String>
     <system:String x:Key="Button.Snapping">Snapping</system:String>
     <system:String x:Key="Button.StartSpout">Start Spout</system:String>
     <system:String x:Key="Button.SpoutActive">Spout Active</system:String>
     <system:String x:Key="Button.Language">Language</system:String>
-
-    <!-- Layer Controls -->
-    <system:String x:Key="Button.AddText">Add Text</system:String>
-    <system:String x:Key="Button.AddImage">Add Image</system:String>
-    <system:String x:Key="Button.Delete">Delete</system:String>
-    <system:String x:Key="Button.MoveUp">Move Up</system:String>
-    <system:String x:Key="Button.MoveDown">Move Down</system:String>
 
     <!-- Text Layer Properties -->
     <system:String x:Key="Expander.TextContent">Text Content</system:String>
