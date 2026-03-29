@@ -305,16 +305,28 @@
                                     <StackPanel Margin="0,0,0,12">
                                         <TextBlock Text="{markup:LanguageKey Label.TextAlignment}" Style="{DynamicResource FieldLabelStyle}" />
                                         <UniformGrid Columns="3">
-                                            <ToggleButton Content="{markup:LanguageKey Button.AlignLeft}"
+                                            <ToggleButton Style="{StaticResource AlignmentToggleButtonStyle}"
+                                                          IsChecked="{Binding IsTextAlignLeft, Mode=TwoWay}">
+                                                <TextBlock Text="&#xE8E4;"
+                                                           FontFamily="Segoe MDL2 Assets"
+                                                           FontSize="15"
+                                                           HorizontalAlignment="Center" />
+                                            </ToggleButton>
+                                            <ToggleButton Style="{StaticResource AlignmentToggleButtonStyle}"
+                                                          IsChecked="{Binding IsTextAlignCenter, Mode=TwoWay}">
+                                                <TextBlock Text="&#xE8E3;"
+                                                           FontFamily="Segoe MDL2 Assets"
+                                                           FontSize="15"
+                                                           HorizontalAlignment="Center" />
+                                            </ToggleButton>
+                                            <ToggleButton Margin="0"
                                                           Style="{StaticResource AlignmentToggleButtonStyle}"
-                                                          IsChecked="{Binding IsTextAlignLeft, Mode=TwoWay}" />
-                                            <ToggleButton Content="{markup:LanguageKey Button.AlignCenter}"
-                                                          Style="{StaticResource AlignmentToggleButtonStyle}"
-                                                          IsChecked="{Binding IsTextAlignCenter, Mode=TwoWay}" />
-                                            <ToggleButton Content="{markup:LanguageKey Button.AlignRight}"
-                                                          Margin="0"
-                                                          Style="{StaticResource AlignmentToggleButtonStyle}"
-                                                          IsChecked="{Binding IsTextAlignRight, Mode=TwoWay}" />
+                                                          IsChecked="{Binding IsTextAlignRight, Mode=TwoWay}">
+                                                <TextBlock Text="&#xE8E2;"
+                                                           FontFamily="Segoe MDL2 Assets"
+                                                           FontSize="15"
+                                                           HorizontalAlignment="Center" />
+                                            </ToggleButton>
                                         </UniformGrid>
                                     </StackPanel>
 

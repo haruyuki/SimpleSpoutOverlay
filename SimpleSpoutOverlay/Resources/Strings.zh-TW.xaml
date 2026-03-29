@@ -30,9 +30,6 @@
     <system:String x:Key="Label.FontFamily">字體</system:String>
     <system:String x:Key="Label.FontSize">字體大小</system:String>
     <system:String x:Key="Label.TextAlignment">文本對齊</system:String>
-    <system:String x:Key="Button.AlignLeft">靠左</system:String>
-    <system:String x:Key="Button.AlignCenter">置中</system:String>
-    <system:String x:Key="Button.AlignRight">靠右</system:String>
     <system:String x:Key="Label.LineHeight">行高</system:String>
     <system:String x:Key="Expander.Appearance">外觀</system:String>
     <system:String x:Key="Label.FillColor">填充顏色</system:String>
