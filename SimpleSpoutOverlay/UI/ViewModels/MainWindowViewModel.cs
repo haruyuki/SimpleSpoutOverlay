@@ -76,6 +76,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     public RelayCommand DeleteLayerCommand { get; }
     public RelayCommand MoveLayerUpCommand { get; }
     public RelayCommand MoveLayerDownCommand { get; }
+    public RelayCommand MoveLayerToTopCommand { get; }
+    public RelayCommand MoveLayerToBottomCommand { get; }
     public RelayCommand ToggleSpoutCommand { get; }
     public RelayCommand UndoCommand { get; }
     public RelayCommand RedoCommand { get; }
@@ -93,8 +95,10 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         AddImageLayerCommand = new RelayCommand(_ => ExecuteAddImageLayer());
         ReplaceImageCommand = new RelayCommand(_ => ExecuteReplaceSelectedImage(), _ => IsImageLayerSelected);
         DeleteLayerCommand = new RelayCommand(_ => DeleteLayer(), _ => SelectedLayer != null);
-        MoveLayerUpCommand = new RelayCommand(_ => MoveLayerUp(), _ => CanMoveLayerUp());
-        MoveLayerDownCommand = new RelayCommand(_ => MoveLayerDown(), _ => CanMoveLayerDown());
+        MoveLayerUpCommand = new RelayCommand(MoveLayerUp, CanMoveLayerUp);
+        MoveLayerDownCommand = new RelayCommand(MoveLayerDown, CanMoveLayerDown);
+        MoveLayerToTopCommand = new RelayCommand(MoveLayerToTop, CanMoveLayerToTop);
+        MoveLayerToBottomCommand = new RelayCommand(MoveLayerToBottom, CanMoveLayerToBottom);
         ToggleSpoutCommand = new RelayCommand(_ => ToggleSpout());
         UndoCommand = new RelayCommand(_ => Undo(), _ => CanUndo);
         RedoCommand = new RelayCommand(_ => Redo(), _ => CanRedo);
@@ -610,18 +614,74 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         SelectedLayer = _layerManager.Layers[nextIndex];
     }
 
-    private void MoveLayerUp()
+    private void MoveLayerUp(object? parameter)
     {
-        if (SelectedLayer == null) return;
+        LayerBase? layer = ResolveLayerParameter(parameter);
+        if (layer == null)
+        {
+            return;
+        }
+
+        SelectedLayer = layer;
         PushUndoSnapshot();
-        _layerManager.MoveLayerUp(SelectedLayer);
+        _layerManager.MoveLayerUp(layer);
     }
 
-    private void MoveLayerDown()
+    private void MoveLayerDown(object? parameter)
     {
-        if (SelectedLayer == null) return;
+        LayerBase? layer = ResolveLayerParameter(parameter);
+        if (layer == null)
+        {
+            return;
+        }
+
+        SelectedLayer = layer;
         PushUndoSnapshot();
-        _layerManager.MoveLayerDown(SelectedLayer);
+        _layerManager.MoveLayerDown(layer);
+    }
+
+    private void MoveLayerToTop(object? parameter)
+    {
+        LayerBase? layer = ResolveLayerParameter(parameter);
+        if (layer == null)
+        {
+            return;
+        }
+
+        int fromIndex = _layerManager.Layers.IndexOf(layer);
+        if (fromIndex <= 0)
+        {
+            return;
+        }
+
+        SelectedLayer = layer;
+        PushUndoSnapshot();
+        _layerManager.MoveLayer(fromIndex, 0);
+    }
+
+    private void MoveLayerToBottom(object? parameter)
+    {
+        LayerBase? layer = ResolveLayerParameter(parameter);
+        if (layer == null)
+        {
+            return;
+        }
+
+        int fromIndex = _layerManager.Layers.IndexOf(layer);
+        int bottomIndex = _layerManager.Layers.Count - 1;
+        if (fromIndex < 0 || fromIndex >= bottomIndex)
+        {
+            return;
+        }
+
+        SelectedLayer = layer;
+        PushUndoSnapshot();
+        _layerManager.MoveLayer(fromIndex, bottomIndex);
+    }
+
+    private LayerBase? ResolveLayerParameter(object? parameter)
+    {
+        return parameter as LayerBase ?? SelectedLayer;
     }
 
     public void ReorderLayer(LayerBase draggedLayer, LayerBase? targetLayer, bool insertAfter)
@@ -974,24 +1034,49 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         return true;
     }
 
-    private bool CanMoveLayerUp()
+    private bool CanMoveLayerUp(object? parameter)
     {
-        if (SelectedLayer == null)
+        LayerBase? layer = ResolveLayerParameter(parameter);
+        if (layer == null)
         {
             return false;
         }
 
-        return _layerManager.Layers.IndexOf(SelectedLayer) > 0;
+        return _layerManager.Layers.IndexOf(layer) > 0;
     }
 
-    private bool CanMoveLayerDown()
+    private bool CanMoveLayerDown(object? parameter)
     {
-        if (SelectedLayer == null)
+        LayerBase? layer = ResolveLayerParameter(parameter);
+        if (layer == null)
         {
             return false;
         }
 
-        int index = _layerManager.Layers.IndexOf(SelectedLayer);
+        int index = _layerManager.Layers.IndexOf(layer);
+        return index >= 0 && index < _layerManager.Layers.Count - 1;
+    }
+
+    private bool CanMoveLayerToTop(object? parameter)
+    {
+        LayerBase? layer = ResolveLayerParameter(parameter);
+        if (layer == null)
+        {
+            return false;
+        }
+
+        return _layerManager.Layers.IndexOf(layer) > 0;
+    }
+
+    private bool CanMoveLayerToBottom(object? parameter)
+    {
+        LayerBase? layer = ResolveLayerParameter(parameter);
+        if (layer == null)
+        {
+            return false;
+        }
+
+        int index = _layerManager.Layers.IndexOf(layer);
         return index >= 0 && index < _layerManager.Layers.Count - 1;
     }
 

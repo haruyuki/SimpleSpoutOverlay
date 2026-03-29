@@ -14,6 +14,12 @@
     <system:String x:Key="Button.SpoutActive">Spout Active</system:String>
     <system:String x:Key="Button.Language">Language</system:String>
 
+    <!-- Layer Context Menu -->
+    <system:String x:Key="Menu.MoveUp">Move Up</system:String>
+    <system:String x:Key="Menu.MoveDown">Move Down</system:String>
+    <system:String x:Key="Menu.MoveToTop">Move to Top</system:String>
+    <system:String x:Key="Menu.MoveToBottom">Move to Bottom</system:String>
+
     <!-- Text Layer Properties -->
     <system:String x:Key="Expander.TextContent">Text Content</system:String>
     <system:String x:Key="Label.Text">Text</system:String>
