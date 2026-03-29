@@ -11,6 +11,8 @@
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <ApplicationIcon>SimpleSpoutOverlay.ico</ApplicationIcon>
         <MSBuildWarningsAsMessages>$(MSBuildWarningsAsMessages);MSB3246</MSBuildWarningsAsMessages>
+        <FileVersion>29.03.2026.1</FileVersion>
+        <InformationalVersion>commit</InformationalVersion>
     </PropertyGroup>
 
     <ItemGroup>
